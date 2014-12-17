@@ -1,4 +1,4 @@
-#ITK BLE - MDE FARM
+#ITK ORGE - MDE FARM
 
 ## Rules
 rules { # liste des règles
@@ -41,10 +41,10 @@ rules { # liste des règles
 ## Activities
 activities { # liste des activites
     activity {
-        id = "Semis_B";
+        id = "Semis_OH";
         temporal {
-                minstart = 00/01/10;
-                maxfinish = 00/31/10;
+                minstart = 00/21/09;
+                maxfinish = 00/20/10;
         }
         rules = "Semis_sub_optimal", "Semis_optimal";
 	ressources = 2;
@@ -52,7 +52,7 @@ activities { # liste des activites
     }
 
     activity {
-        id = "Herbicide_1_B";
+        id = "Herbicide_1_OH";
         temporal {
                 minstart = 00/01/11;
                         }
@@ -62,9 +62,9 @@ activities { # liste des activites
     }
 
     activity {
-        id = "Herbicide_2_B";
+        id = "Herbicide_2_OH";
         temporal {
-                minstart = 01/05/07;
+                minstart = 01/21/06;
         }
         rules = "Herbicide";
 	ressources = 1;
@@ -72,10 +72,10 @@ activities { # liste des activites
     }
 
     activity {
-        id = "Recolte_B";
+        id = "Recolte_OH";
         temporal {
-                minstart = 01/15/07;
-		maxstart = 01/01/08;	#tirer au hasard la date de départ entre min et max start
+                minstart = 01/01/07;
+		maxstart = 01/15/07;	#tirer au hasard la date de départ entre min et max start
         }
         rules = "Recolte";
         ressources = 2;
@@ -83,7 +83,7 @@ activities { # liste des activites
     }
 
     activity {
-        id = "Paille_B";
+        id = "Paille_OH";
         temporal {
         }
         rules = "Paille";
@@ -92,9 +92,9 @@ activities { # liste des activites
     }
 
     activity {
-        id = "Dechaumage_1_B";
+        id = "Dechaumage_1_OH";
         temporal {
-                maxfinish = 00/30/09;
+                maxfinish = 00/20/09;
         }
         rules = "Dechaumage_sub_optimal", "Dechaumage_optimal";
         ressources = 1;
@@ -102,9 +102,9 @@ activities { # liste des activites
     }
 
 activity {
-        id = "Dechaumage_2_B";
+        id = "Dechaumage_2_OH";
         temporal {
-                maxfinish = 00/30/09;
+                maxfinish = 00/20/09;
         }
         rules = "Dechaumage_sub_optimal", "Dechaumage_optimal";
         ressources = 1;
@@ -112,9 +112,9 @@ activity {
     }
 
 activity {
-        id = "Dechaumage_3_B";
+        id = "Dechaumage_3_OH";
         temporal {
-                maxfinish = 00/30/09;
+                maxfinish = 00/20/09;
         }
         rules = "Dechaumage_sub_optimal", "Dechaumage_optimal";
         ressources = 1;
@@ -127,48 +127,47 @@ activity {
 precedences {
     precedence {
         type = FS; 
-        first = "??"; ## l'activité "récolte" de la culture précédente  ou "paille" si la culture précédente est du blé ou de l'orge
-        second = "Dechaumage_1_B"; 
+        first = "??"; ##  l'activité "récolte" de la culture précédente  ou "paille" si la culture précédente est du blé ou de l'orge
+        second = "Dechaumage_1_OH"; 
     }
     precedence {
         type = FS;
-        first = "Dechaumage_1_B";
-        second = "Dechaumage_2_B";
+        first = "Dechaumage_1_OH";
+        second = "Dechaumage_2_OH";
 	mintimelag = 15
     }
  precedence {
         type = FS;
-        first = "Dechaumage_2_B";
-        second = "Dechaumage_3_B";
+        first = "Dechaumage_2_OH";
+        second = "Dechaumage_3_OH";
 	mintimelag = 15
     }
     precedence {
         type = FS;
-        first = "??";## l'activité "récolte" de la culture précédente  ou "paille" si la culture précédente est du blé ou de l'orge
-        second = "Semis_B";
+        first = "??";##  l'activité "récolte" de la culture précédente  ou "paille" si la culture précédente est du blé ou de l'orge
+        second = "Semis_OH";
     }
    precedence {
         type = FS;
-        first = "Semis_B";
-        second = "Herbicide_1_B";
+        first = "Semis_OH";
+        second = "Herbicide_1_OH";
     }
    precedence {
         type = FS;
-        first = "Herbicide_1_B";
-        second = "Herbicide_2_B";
+        first = "Herbicide_1_OH";
+        second = "Herbicide_2_OH";
     }
    precedence {
         type = FS;
-        first = "Herbicide_2_B";
-        second = "Récolte_B";
+        first = "Herbicide_2_OH";
+        second = "Récolte_OH";
 	mintimelag = 10
     }
-  precedence {
+   precedence {
         type = FS;
-        first = "Récolte_B";
-        second = "Paille_B";
+        first = "Récolte_OH";
+        second = "Paille_OH";
     }
-
 
 
 

@@ -1,0 +1,127 @@
+#ITK BS - MDE FARM
+
+## Rules
+rules { # liste des règles
+
+    rule {
+        id = "Recolte_BS_optimal";
+        predicates = "penetrabiliteParcelle_inf_38", "pluie_5";
+    }
+
+    rule {
+        id = "Recolte_BS_sub_optimal";
+        predicates = "penetrabiliteParcelle_sup_38", "pluie_5", "2j_pluie_10", "3j_pluie_20";
+    }
+
+    rule {
+        id = "Dechaumage_sub_optimal";
+        predicates = "penetrabiliteParcelle_sup_38", "pluie_5", "2j_pluie_10";
+    }
+
+    rule {
+        id = "Dechaumage_optimal";
+        predicates = "penetrabiliteParcelle_inf_38", "pluie_6";
+ }
+}
+
+## Activities
+activities { # liste des activites
+    
+    activity {
+        id = "Recolte_BS_1";  #sur 1/3 de la surface
+     temporal {
+                minstart = 01/01/10;
+		maxstart = 01/15/10;	#tirer au hasard la date de départ entre min et max start
+        }
+        rules = "Recolte_BS";
+        ressources = 2;
+	speed_ha_per_day = 10;
+    }
+
+    activity {
+        id = "Recolte_BS_2";    #sur 1/3 de la surface
+     temporal {
+    }
+        rules = "Recolte_BS";
+        ressources = 2;
+	speed_ha_per_day = 10;
+    }
+
+    activity {
+        id = "Recolte_BS_3";  #sur 1/3 de la surface
+     temporal {
+     }
+        rules = "Recolte_BS";
+        ressources = 2;
+	speed_ha_per_day = 10;
+    }
+
+    activity {
+        id = "Dechaumage_1_BS";
+        temporal {
+                maxfinish = 00/30/11;
+        }
+        rules = "Dechaumage_sub_optimal", "Dechaumage_optimal";
+        ressources = 1;
+	speed_ha_per_day = 20;
+    }
+
+activity {
+        id = "Dechaumage_2_BS";
+         temporal {
+                maxfinish = 00/30/11;
+        }
+        rules = "Dechaumage_sub_optimal", "Dechaumage_optimal";
+        ressources = 1;
+	speed_ha_per_day = 20;
+    }
+
+activity {
+        id = "Dechaumage_3_BS";
+        temporal {
+                maxfinish = 00/30/11;
+        }
+        rules = "Dechaumage_sub_optimal", "Dechaumage_optimal";
+        ressources = 1;
+	speed_ha_per_day = 20;
+    }
+
+}
+
+## Precedences
+precedences {
+    precedence {
+        type = FS; 
+        first = "??"; ##  l'activité "récolte" de la culture précédente  ou "paille" si la culture précédente est du blé ou de l'orge
+        second = "Dechaumage_1_BS"; 
+    }
+    precedence {
+        type = FS;
+        first = "Dechaumage_1_BS";
+        second = "Dechaumage_2_BS";
+	mintimelag = 15
+    }
+ precedence {
+        type = FS;
+        first = "Dechaumage_2_BS";
+        second = "Dechaumage_3_BS";
+	mintimelag = 15
+    }
+precedences {
+    precedence {
+        type = FS; 
+        first = "Récolte_BS_1"; 
+        second = "Récolte_BS_2"; 
+	mintimelag = 10
+    }
+precedences {
+    precedence {
+        type = FS; 
+        first = "Récolte_BS_2"; 
+        second = "Récolte_BS_3"; 
+	mintimelag = 10
+    }
+}    
+
+
+

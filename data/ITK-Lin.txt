@@ -1,0 +1,148 @@
+#ITK Pois - MDE FARM
+
+## Rules
+rules { # liste des règles
+
+    rule {
+        id = "Recolte_L";
+        predicates = "penetrabiliteParcelle_inf_37", "2j_pluie_3";
+    }
+
+    rule {
+        id = "Ecapsulage_L";
+        predicates = "2j_pluie_1", "4j_pluie_7";
+    }
+
+    rule {
+        id = "Retournage_L";
+        predicates = "2j_pluie_1";
+    }
+
+    rule {
+        id = "Enroulage_L";
+        predicates = "2j_pluie_1", "4j_pluie_5", ETP_sup_1-5;
+    }
+
+    rule {
+        id = "Dechaumage_sub_optimal";
+        predicates = "penetrabiliteParcelle_sup_38", "pluie_5", "2j_pluie_10";
+    }
+
+    rule {
+        id = "Dechaumage_optimal";
+        predicates = "penetrabiliteParcelle_inf_38", "pluie_6";
+ }
+}
+
+## Activities
+activities { # liste des activites
+    
+    activity {
+        id = "Recolte_L;
+     temporal {
+                minstart = 01/10/07;
+		maxstart = 01/31/07;	#tirer au hasard la date de départ entre min et max start
+        }
+        rules = "Recolte_L";
+        ressources = 0;
+	speed_ha_per_day = 10;
+    }
+
+  activity {
+        id = "Ecapsulage_L";   
+     temporal {
+    }
+        rules = "Ecapsulage_L";
+        ressources = 1;
+	speed_ha_per_day = 10;
+    }
+
+ activity {
+        id = "Retournage_L";   
+     temporal {
+    }
+        rules = "Retournage_L";
+        ressources = 1;
+	speed_ha_per_day = 10;
+    }
+
+ activity {
+        id = "Enroulage_L";   
+     temporal {
+    }
+        rules = "Enroulage_L";
+        ressources = 2;
+	speed_ha_per_day = 6;
+    }
+
+    activity {
+        id = "Dechaumage_1_L;
+        temporal {
+                maxfinish = 00/30/11;
+        }
+        rules = "Dechaumage_sub_optimal", "Dechaumage_optimal";
+        ressources = 1;
+	speed_ha_per_day = 20;
+    }
+
+activity {
+        id = "Dechaumage_2_L;
+         temporal {
+                maxfinish = 00/30/11;
+        }
+        rules = "Dechaumage_sub_optimal", "Dechaumage_optimal";
+        ressources = 1;
+	speed_ha_per_day = 20;
+    }
+
+activity {
+        id = "Dechaumage_3_L;
+        temporal {
+                maxfinish = 00/30/11;
+        }
+        rules = "Dechaumage_sub_optimal", "Dechaumage_optimal";
+        ressources = 1;
+	speed_ha_per_day = 20;
+    }
+
+}
+
+## Precedences
+precedences {
+     precedence {
+        type = FS;
+        first = "Recolte_L;
+        second = "Ecapsulage_L;
+	mintimelag = 10
+    }
+  precedence {
+        type = FS;
+        first = "Ecapsulage_L;
+        second = "Retournage_L;
+	mintimelag = 10
+    }
+ precedence {
+        type = FS;
+        first = "Retournage_L;
+        second = "Enroulage_L;
+	mintimelag = 10
+    }
+
+precedence {
+        type = FS; 
+        first = "??"; ##  l'activité "récolte" de la culture précédente  ou "paille" si la culture précédente est du blé ou de l'orge
+        second = "Dechaumage_1_L; 
+    }
+    precedence {
+        type = FS;
+        first = "Dechaumage_1_L;
+        second = "Dechaumage_2_L;
+	mintimelag = 15
+    }
+ precedence {
+        type = FS;
+        first = "Dechaumage_2_L;
+        second = "Dechaumage_3_L;
+	mintimelag = 15
+    }
+}    

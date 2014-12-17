@@ -105,7 +105,7 @@ activities { # liste des activites
 precedences {
     precedence {
         type = FS; 
-        first = "??"; ## la récolte de la culture précédente
+        first = "??"; ##  l'activité "récolte" de la culture précédente  ou "paille" si la culture précédente est du blé ou de l'orge
         second = "Dechaumage_1_C"; 
     }
     precedence {
@@ -122,7 +122,7 @@ precedences {
     }
     precedence {
         type = FS;
-        first = "??";## la récolte de la culture précédente
+        first = "??";##  l'activité "récolte" de la culture précédente  ou "paille" si la culture précédente est du blé ou de l'orge
         second = "Semis_C";
     }
    precedence {

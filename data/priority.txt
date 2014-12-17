@@ -8,6 +8,21 @@
 "Herbicide_1_B = 2
 "Herbicide_2_B = 2
 "Recolte_B" = 0
+"Paille_B" = 2
+"Semis_OH" = 1
+"Herbicide_1_OH = 2
+"Herbicide_2_OH = 2
+"Recolte_OH" = 0
+"Paille_OH" = 2
+"Recolte_L" = 0
+"Ecapsulage_L" = 0
+"Retournage_L" = 0
+"Enroulage_L" = 0
+"Recolte_PDT" = 0
+"Recolte_BS_1" = 0
+"Recolte_BS_2" = 0
+"Recolte_BS_3" = 0
+"Recolte_P" = 0
 
 #Activities sans piorites
 
@@ -18,4 +33,18 @@
 #"Dechaumage_1_B"
 #"Dechaumage_2_B";
 #"Dechaumage_3_B";
-
+#"Dechaumage_1_OH"
+#"Dechaumage_2_OH";
+#"Dechaumage_3_OH";
+#"Dechaumage_1_L"
+#"Dechaumage_2_L";
+#"Dechaumage_3_L";
+#"Dechaumage_1_P"
+#"Dechaumage_2_P";
+#"Dechaumage_3_P";
+#"Dechaumage_1_BS"
+#"Dechaumage_2_BS";
+#"Dechaumage_3_BS";
+#"Dechaumage_1_PDT"
+#"Dechaumage_2_PDT";
+#"Dechaumage_3_PDT";

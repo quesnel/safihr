@@ -1,0 +1,91 @@
+#ITK PDT - MDE FARM
+
+## Rules
+rules { # liste des règles
+
+    rule {
+        id = "Recolte_PDT";
+        predicates = "penetrabiliteParcelle_inf_38", "pluie_5", "2j_pluie_10";
+    }
+
+    rule {
+        id = "Dechaumage_sub_optimal";
+        predicates = "penetrabiliteParcelle_sup_38", "pluie_5", "2j_pluie_10";
+    }
+
+    rule {
+        id = "Dechaumage_optimal";
+        predicates = "penetrabiliteParcelle_inf_38", "pluie_6";
+ }
+}
+
+## Activities
+activities { # liste des activites
+    
+activity {
+        id = "Recolte_PDT";  
+      temporal {
+                minstart = 01/10/09;
+		maxstart = 01/20/09;	#tirer au hasard la date de départ entre min et max start
+        }
+        rules = "Recolte_PDT";
+        ressources = 2;
+	speed_ha_per_day = 4;
+    }
+
+    activity {
+        id = "Dechaumage_1_PDT";
+        temporal {
+                maxfinish = 00/30/11;
+        }
+        rules = "Dechaumage_sub_optimal", "Dechaumage_optimal";
+        ressources = 1;
+	speed_ha_per_day = 20;
+    }
+
+activity {
+        id = "Dechaumage_2_PDT";
+         temporal {
+                maxfinish = 00/30/11;
+        }
+        rules = "Dechaumage_sub_optimal", "Dechaumage_optimal";
+        ressources = 1;
+	speed_ha_per_day = 20;
+    }
+
+activity {
+        id = "Dechaumage_3_PDT";
+        temporal {
+                maxfinish = 00/30/11;
+        }
+        rules = "Dechaumage_sub_optimal", "Dechaumage_optimal";
+        ressources = 1;
+	speed_ha_per_day = 20;
+    }
+
+}
+
+## Precedences
+precedences {
+    precedence {
+        type = FS; 
+        first = "??"; ##  l'activité "récolte" de la culture précédente  ou "paille" si la culture précédente est du blé ou de l'orge
+        second = "Dechaumage_1_PDT"; 
+    }
+    precedence {
+        type = FS;
+        first = "Dechaumage_1_PDT";
+        second = "Dechaumage_2_PDT";
+	mintimelag = 15
+    }
+ precedence {
+        type = FS;
+        first = "Dechaumage_2_PDT";
+        second = "Dechaumage_3_PDT";
+	mintimelag = 15
+    }
+}    
+
+
+
+
