@@ -22,75 +22,235 @@
 
 #include <vle/extension/decision/Agent.hpp>
 #include <vle/extension/decision/Activity.hpp>
-#include <vle/devs/DynamicsDbg.hpp>
-#include <sstream>
+#include <vle/devs/Executive.hpp>
+#include <vle/devs/ExecutiveDbg.hpp>
+#include <vle/utils/Package.hpp>
+#include <vle/utils/i18n.hpp>
+#include <fstream>
+#include "global.hpp"
+#include "strategic.hpp"
+#include "lu.hpp"
 
-namespace vd = vle::devs;
-namespace vv = vle::value;
-namespace vmd = vle::extension::decision;
+namespace safihr {
 
-namespace vle { namespace examples { namespace decision {
-
-class SimpleAgent: public vmd::Agent
+class Farmer : public vle::devs::Executive,
+               public vle::extension::decision::KnowledgeBase
 {
+    typedef vle::extension::decision::Activities::result_t ActivityList;
+
+    CropRotation m_rotation;
+    LandUnits m_lus;
+
+
+    void farm_initialize()
+    {
+        for (size_t i = 0, e = m_lus.lus.size(); i != e; ++i) {
+            char buffer[std::numeric_limits<int>::digits10 + 2];
+
+            std::snprintf(buffer, sizeof(buffer), "p%d", m_lus.lus[i].id);
+
+            createModelFromClass("CropSoil", buffer);
+        }
+    }
+
 public:
-    SimpleAgent(const vd::DynamicsInit& mdl, const vd::InitEventList& evts)
-        : vmd::Agent(mdl, evts), mStart(false)
+    Farmer(const vle::devs::ExecutiveInit& mdl, const vle::devs::InitEventList& evts)
+        : vle::devs::Executive(mdl, evts)
     {
-        addFact("start", boost::bind(&SimpleAgent::start, this, _1));
+        vle::utils::Package pack("safihr");
 
-        vmd::Rule& r = addRule("rule");
-        r.add(boost::bind(&SimpleAgent::isStarted, this));
+        {
+            std::ifstream ifs(pack.getDataFile("Assolement-test.txt"));
+            ifs >> m_rotation;
+        }
 
-        vmd::Rule& r2 = addRule("rule2");
-        r2.add(boost::bind(&SimpleAgent::alwaysFalse, this));
-
-        vmd::Activity& b = addActivity("B", 0.0, 10.0);
-        b.addRule("rule2", r2);
-
-        vmd::Activity& a = addActivity("A", 0.0, 10.0);
-        a.addRule("rule", r);
-
-        addStartToStartConstraint("A", "B", 3.0);
-    }
-
-    virtual ~SimpleAgent()
-    {
-    }
-
-    void start(const vle::value::Value& val)
-    {
-        if (not mStart) {
-            mStart = val.toBoolean().value();
+        {
+            std::ifstream ifs(pack.getDataFile("Farm.txt"));
+            ifs >> m_lus;
         }
     }
 
-    bool isStarted() const
+    virtual ~Farmer()
     {
-        return mStart;
     }
 
-    bool alwaysFalse() const
+    virtual vle::devs::Time init(const vle::devs::Time& time)
     {
-        return false;
+        mState = Output;
+        mCurrentTime = time;
+        mNextChangeTime = processChanges(time);
+
+        return 0.0;
     }
 
-    virtual vv::Value* observation(const vd::ObservationEvent& evt) const
+    virtual void output(const vle::devs::Time& time,
+                        vle::devs::ExternalEventList& output) const
     {
-        if (evt.onPort("text")) {
-            std::ostringstream out;
+        (void)time;
+
+        if (mState == Output) {
+
+            {
+                const Farmer::ActivityList& lst = latestStartedActivities();
+                Farmer::ActivityList::const_iterator it = lst.begin();
+                for (; it != lst.end(); ++it) {
+                    (*it)->second.output((*it)->first, output);
+                }
+            }
+            {
+                const Farmer::ActivityList& lst = latestFailedActivities();
+                Farmer::ActivityList::const_iterator it = lst.begin();
+                for (; it != lst.end(); ++it) {
+                    (*it)->second.output((*it)->first, output);
+                }
+            }
+            {
+                const Farmer::ActivityList& lst = latestDoneActivities();
+                Farmer::ActivityList::const_iterator it = lst.begin();
+                for (; it != lst.end(); ++it) {
+                    (*it)->second.output((*it)->first, output);
+                }
+            }
+            {
+                const Farmer::ActivityList& lst = latestEndedActivities();
+                Farmer::ActivityList::const_iterator it = lst.begin();
+                for (; it != lst.end(); ++it) {
+                    (*it)->second.output((*it)->first, output);
+                }
+            }
+        }
+    }
+
+    virtual vle::devs::Time timeAdvance() const
+    {
+        switch (mState) {
+        case Init:
+        case Output:
+        case UpdateFact:
+            return 0.0;
+        case Process:
+            if (mNextChangeTime.second == vle::devs::negativeInfinity or
+                mNextChangeTime.first == true or
+                haveActivityInLatestActivitiesLists()) {
+                return 0.0;
+            } else {
+                return mNextChangeTime.second - mCurrentTime;
+            }
+        }
+
+        throw std::logic_error("unknown state");
+    }
+
+    virtual void internalTransition(const vle::devs::Time& time)
+    {
+        mCurrentTime = time;
+
+        switch (mState) {
+        case Output:
+            clearLatestActivitiesLists();
+        case Init:
+        case UpdateFact:
+            mNextChangeTime = processChanges(time);
+            mState = Process;
+            break;
+        case Process:
+            mState = Output;
+            break;
+        }
+    }
+
+    virtual void externalTransition(const vle::devs::ExternalEventList& events,
+                                    const vle::devs::Time& time)
+    {
+        mCurrentTime = time;
+
+        for (vle::devs::ExternalEventList::const_iterator it = events.begin();
+             it != events.end(); ++it) {
+            const std::string& port((*it)->getPortName());
+            const vle::value::Map& atts = (*it)->getAttributes();
+
+            if (port == "ack") {
+                const std::string& activity(atts.getString("name"));
+                const std::string& order(atts.getString("value"));
+
+                if (order == "done") {
+                    setActivityDone(activity, time);
+                } else if (order == "fail") {
+                    setActivityFailed(activity, time);
+                } else {
+                    throw vle::utils::ModellingError(
+                        vle::fmt(_("Decision: unknown order `%1%'")) % order);
+                }
+            } else {
+                vle::value::Map::const_iterator jt = atts.value().find("value");
+                if (jt == atts.end()) {
+                    jt = atts.value().find("init");
+                }
+
+                if (jt == atts.end() or not jt->second) {
+                    throw vle::utils::ModellingError(
+                        vle::fmt(_("Decision: no value in this message: `%1%'")) %
+                        (*it));
+                }
+
+                applyFact(port, *jt->second);
+            }
+        }
+
+        mState = UpdateFact;
+    }
+
+    virtual void confluentTransitions(const vle::devs::Time& time,
+                                      const vle::devs::ExternalEventList& lst)
+    {
+        internalTransition(time);
+        externalTransition(lst, time);
+    }
+
+    virtual vle::value::Value* observation(const vle::devs::ObservationEvent& event) const
+    {
+        const std::string port = event.getPortName();
+
+        if (port == "KnowledgeBase") {
+            std::stringstream out;
             out << *this;
-
-            return new vv::String(out.str());
+            return new vle::value::String(out.str());
+        } else if (port == "Activities") {
+            std::stringstream out;
+            out << activities();
+            return new vle::value::String(out.str());
+        } else if ((port.compare(0, 9, "Activity_") == 0) and port.size() > 9) {
+            std::string activity(port, 9, std::string::npos);
+            const vle::extension::decision::Activity& act(activities().get(activity)->second);
+            std::stringstream out;
+            out << act.state();
+            return new vle::value::String(out.str());
+        } else if ((port.compare(0, 6, "Rules_") == 0) and port.size() > 6) {
+            std::string rule(port, 6, std::string::npos);
+            const vle::extension::decision::Rule& ru(rules().get(rule));
+            return new vle::value::Boolean(ru.isAvailable());
         }
-
         return 0;
     }
 
+    virtual void finish()
+    {
+    }
+
 private:
-    bool mStart;
+    enum State
+    {
+        Init,
+        Process,
+        UpdateFact,
+        Output
+    };
+
+    vle::extension::decision::KnowledgeBase::Result mNextChangeTime;
+    vle::devs::Time mCurrentTime;
+    State mState;
 };
 
-}}} // namespace vle examples decision
+} // namespace safihr
 
-DECLARE_DYNAMICS_DBG(vle::examples::decision::SimpleAgent)
+DECLARE_EXECUTIVE_DBG(safihr::Farmer)
