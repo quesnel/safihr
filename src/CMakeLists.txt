@@ -1,5 +1,5 @@
 include_directories(${CMAKE_SOURCE_DIR}/src ${VLE_INCLUDE_DIRS}
-  ${VLE_DEPS_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} ${CELLDEVS_INCLUDE_DIRS} 
+  ${VLE_DEPS_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} ${CELLDEVS_INCLUDE_DIRS}
   ${CELLQSS_INCLUDE_DIRS}
   ${DECISION_INCLUDE_DIRS} ${DIFFERENCE_EQU_INCLUDE_DIRS}
   ${DIFFERENTIAL_EQU_INCLUDE_DIRS} ${DSDEVS_INCLUDE_DIRS} ${FSA_INCLUDE_DIRS}
@@ -11,9 +11,12 @@ link_directories(${VLE_LIBRARY_DIRS}
   ${DIFFERENCE_EQU_LIBRARY_DIRS} ${DIFFERENTIAL_EQU_LIBRARY_DIRS}
   ${DSDEVS_LIBRARY_DIRS} ${FSA_LIBRARY_DIRS} ${PETRINET_LIBRARY_DIRS})
 
-DeclareDecisionDynamics(Agent "agent-model.cpp;lu.cpp;lu.hpp;crop.cpp;crop.hpp")
+DeclareDecisionDynamics(Agent "agent-model.cpp;lu.cpp;lu.hpp;crop.cpp;crop.hpp;strategic.cpp;strategic.hpp")
+
 DeclareDevsDynamics(Crop "crop-model.cpp")
+
 DeclareDevsDynamics(Soil "soil-model.cpp")
+
 DeclareDevsDynamics(Meteo "meteo-model.cpp")
 
 #

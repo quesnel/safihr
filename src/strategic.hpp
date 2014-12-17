@@ -20,53 +20,27 @@
  * SOFTWARE.
  */
 
-#include "crop.hpp"
+#ifndef SAFIHR_STRATEGIC_HPP
+#define SAFIHR_STRATEGIC_HPP
+
 #include "global.hpp"
-#include <fstream>
-#include <boost/assign.hpp>
+#include <vector>
+#include <map>
+#include <istream>
+#include <ostream>
 
 namespace safihr {
 
-std::istream& operator>>(std::istream &is, Crop &crop)
+struct CropRotation
 {
-    if (is) {
-        std::string tmp;
+    std::vector <int> years;
+    std::map <int, std::vector <CropType>> crops;
+};
 
-        is >> tmp >> crop.surf_min >> crop.surf_max >> crop.dr >> crop.repete_min
-            >> crop.repete_max;
-
-        if (!is)
-            goto failure;
-
-        crop.crop_id = string_to_crop(tmp);
-
-        for (int i = 0; i < 7; ++i) {
-            is >> tmp;
-
-            if (!is)
-                goto failure;
-
-            crop.prec[i] = (tmp == "oui");
-        }
-
-        if (is)
-            return is;
-    }
-
-failure:
-    is.setstate(std::ios::failbit);
-
-    return is;
-}
-
-std::istream& operator>>(std::istream& is, Crops &crops)
-{
-    while (is) {
-        crops.crops.push_back(Crop());
-        is >> crops.crops.back();
-    }
-
-    return is;
-}
+std::istream& operator>>(std::istream &is, CropRotation &rotation);
+std::ostream& operator<<(std::ostream &os, const CropRotation &rotation);
+bool operator==(const CropRotation& lhs, const CropRotation& rhs);
 
 }
+
+#endif

@@ -33,10 +33,61 @@
 #include <boost/test/auto_unit_test.hpp>
 #include <boost/test/floating_point_comparison.hpp>
 
-BOOST_AUTO_TEST_CASE(test_1)
+#include "lu.hpp"
+#include "crop.hpp"
+#include "strategic.hpp"
+#include <vle/utils/Package.hpp>
+#include <vle/utils/Path.hpp>
+#include <vle/utils/ModuleManager.hpp>
+#include <vle/vle.hpp>
+#include <fstream>
+#include <sstream>
+#include <iostream>
+
+struct F
 {
-    BOOST_REQUIRE_EQUAL(1, 1);
-    BOOST_REQUIRE_CLOSE(1000.0, 1000.1, 10.);
-    BOOST_REQUIRE(1 == 1);
-    BOOST_TEST_MESSAGE("test");
+    vle::Init app;
+
+    F() : app() {}
+    ~F() {}
+};
+
+BOOST_GLOBAL_FIXTURE(F)
+
+BOOST_AUTO_TEST_CASE(test_crop_rotation)
+{
+    vle::utils::Package pack("safihr");
+    std::string filepath(pack.getDataFile("Assolement-test.txt"));
+    std::ifstream ifs(filepath.c_str());
+    BOOST_REQUIRE(ifs.is_open());
+
+    safihr::CropRotation cr1, cr2;
+    ifs >> cr1;
+    BOOST_REQUIRE(ifs.eof());
+
+    std::stringstream ss;
+    ss << cr1;
+    ss >> cr2;
+
+    BOOST_REQUIRE(cr1 == cr2);
+}
+
+BOOST_AUTO_TEST_CASE(test_lus)
+{
+    vle::utils::Package pack("safihr");
+    std::string filepath(pack.getDataFile("Farm.txt"));
+    std::ifstream ifs(filepath.c_str());
+    BOOST_REQUIRE(ifs.is_open());
+
+    safihr::LandUnits lu1, lu2;
+    ifs >> lu1;
+    BOOST_REQUIRE(ifs.eof());
+
+    std::cout << lu1 << "\n";
+
+    std::stringstream ss;
+    ss << lu1;
+    ss >> lu2;
+
+    BOOST_REQUIRE(lu1 == lu2);
 }

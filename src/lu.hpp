@@ -34,16 +34,23 @@ struct LandUnit
     int lu_min;
     int lu_max;
     int nb_lu;
-    double sau;
+    int sau;
 };
 
 struct LandUnits
 {
+    typedef std::deque <LandUnit>::const_iterator const_iterator;
+    typedef std::deque <LandUnit>::iterator iterator;
+
     std::deque <LandUnit> lus;
 };
 
 std::istream& operator>>(std::istream &is, LandUnit &lu);
-std::istream& operator>>(std::istream& is, LandUnits &lus);
+std::istream& operator>>(std::istream &is, LandUnits &lus);
+std::ostream& operator<<(std::ostream &is, LandUnit &lu);
+std::ostream& operator<<(std::ostream &is, LandUnits &lus);
+bool operator==(const LandUnit &lhs, const LandUnit &rhs);
+bool operator==(const LandUnits &lhs, const LandUnits &rhs);
 
 }
 

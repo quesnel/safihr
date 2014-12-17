@@ -24,12 +24,55 @@
 #define SAFIHR_GLOBAL_HPP
 
 #include <exception>
+#include <map>
 #include <string>
 #include <vle/utils/i18n.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/cast.hpp>
 
 namespace safihr {
+
+enum CropType
+{
+    BLE,
+    BS,
+    COLZA,
+    OH,
+    LIN,
+    POIS,
+    PDT
+};
+
+static inline CropType string_to_crop(const std::string& str)
+{
+    static const std::map <std::string, CropType> available(
+        {
+            { "B", BLE },
+            { "BS", BS },
+            { "C", COLZA },
+            { "OH", OH },
+            { "L", LIN },
+            { "P", POIS },
+            { "PDT", PDT }
+        });
+
+    std::map <std::string, CropType>::const_iterator it = available.find(str);
+    if (it == available.end())
+        throw std::invalid_argument("can not convert crop name");
+
+    return it->second;
+}
+
+static inline const char* crop_to_string(CropType type)
+{
+    static const char *available[] = {"B", "BS", "C", "OH", "L", "P", "PDT" };
+
+    size_t i = static_cast <int>(type);
+    if (i >= (sizeof(available) / sizeof((available)[0])))
+        throw std::invalid_argument("can not convert crop id");
+
+    return available[i];
+}
 
 inline double stod(const std::string &str)
 {

@@ -1,0 +1,21 @@
+#Farm MDE
+
+#Activities avec piorites
+"Semis_C" = 1
+"Herbicide_C" = 2
+"Recolte_C" = 0
+"Semis_B" = 1
+"Herbicide_1_B = 2
+"Herbicide_2_B = 2
+"Recolte_B" = 0
+
+#Activities sans piorites
+
+
+#"Dechaumage_1_C"
+#"Dechaumage_2_C";
+#"Dechaumage_3_C";
+#"Dechaumage_1_B"
+#"Dechaumage_2_B";
+#"Dechaumage_3_B";
+

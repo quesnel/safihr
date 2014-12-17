@@ -30,18 +30,6 @@
 
 namespace safihr {
 
-enum CropId {
-    BLE,
-    BS,
-    COLZA,
-    OH,
-    LIN,
-    POIS,
-    PDT
-};
-
-CropId convert_name_to_crop(const std::string &name);
-
 struct Crop
 {
     int crop_id;
@@ -50,7 +38,7 @@ struct Crop
     int dr;
     int repete_min;
     int repete_max;
-    boost::array <bool , 7> prec;
+    boost::array <bool, 7> prec;
 };
 
 struct Crops

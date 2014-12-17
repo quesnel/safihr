@@ -1,0 +1,163 @@
+#ITK BLE - MDE FARM
+
+## Rules
+rules { # liste des règles
+    rule {
+        id = "Semis_sub_optimal";
+        predicates = "penetrabiliteParcelle_40", "pluie_5", "2j_pluie_8", "3j_pluie_20";
+    }
+
+    rule {
+        id = "Semis_optimal";
+        predicates = "penetrabiliteParcelle_inf_40", "pluie_5", "2j_pluie_8";
+    }
+
+
+    rule {
+        id = "Herbicide";
+        predicates = "penetrabiliteParcelle_40", "pluie_2";
+    }
+
+    rule {
+        id = "Recolte";
+        predicates = "pluie_2", "2j_pluie_10";
+    }
+
+    rule {
+        id = "Dechaumage_sub_optimal";
+        predicates = "penetrabiliteParcelle_sup_38", "pluie_5", "2j_pluie_10";
+    }
+
+    rule {
+        id = "Dechaumage_optimal";
+        predicates = "penetrabiliteParcelle_inf_38", "pluie_6";
+    }
+
+}
+
+## Activities
+activities { # liste des activites
+    activity {
+        id = "Semis_B";
+        temporal {
+                minstart = 00/01/10;
+                maxfinish = 00/31/10;
+        }
+        rules = "Semis_sub_optimal", "Semis_optimal";
+	ressources = 2;
+	speed_ha_per_day = 10;
+    }
+
+    activity {
+        id = "Herbicide_1_B";
+        temporal {
+                minstart = 00/01/11;
+                        }
+        rules = "Herbicide";
+	ressources = 1;
+	speed_ha_per_day = 30;
+    }
+
+    activity {
+        id = "Herbicide_2_B";
+        temporal {
+                minstart = 01/05/07;
+        }
+        rules = "Herbicide";
+	ressources = 1;
+	speed_ha_per_day = 30;
+    }
+
+    activity {
+        id = "Recolte_B";
+        temporal {
+                minstart = 01/15/07;
+		maxstart = 01/01/08;	#tirer au hasard la date de départ entre min et max start
+        }
+        rules = "Recolte";
+        ressources = 2;
+	speed_ha_per_day = 15;
+    }
+
+    activity {
+        id = "Dechaumage_1_B";
+        temporal {
+                maxfinish = 00/30/09;
+        }
+        rules = "Dechaumage_sub_optimal", "Dechaumage_optimal";
+        ressources = 1;
+	speed_ha_per_day = 20;
+    }
+
+activity {
+        id = "Dechaumage_2_B";
+        temporal {
+                maxfinish = 00/30/09;
+        }
+        rules = "Dechaumage_sub_optimal", "Dechaumage_optimal";
+        ressources = 1;
+	speed_ha_per_day = 20;
+    }
+
+activity {
+        id = "Dechaumage_3_B";
+        temporal {
+                maxfinish = 00/30/09;
+        }
+        rules = "Dechaumage_sub_optimal", "Dechaumage_optimal";
+        ressources = 1;
+	speed_ha_per_day = 20;
+    }
+
+}
+
+## Precedences
+precedences {
+    precedence {
+        type = FS; 
+        first = "??"; ## la récolte de la culture précédente
+        second = "Dechaumage_1_B"; 
+    }
+    precedence {
+        type = FS;
+        first = "Dechaumage_1_B";
+        second = "Dechaumage_2_B";
+	mintimelag = 15
+    }
+ precedence {
+        type = FS;
+        first = "Dechaumage_2_B";
+        second = "Dechaumage_3_B";
+	mintimelag = 15
+    }
+    precedence {
+        type = FS;
+        first = "??";## la récolte de la culture précédente
+        second = "Semis_B";
+    }
+   precedence {
+        type = FS;
+        first = "Semis_B";
+        second = "Herbicide_1_B";
+    }
+   precedence {
+        type = FS;
+        first = "Herbicide_1_B";
+        second = "Herbicide_2_B";
+    }
+   precedence {
+        type = FS;
+        first = "Herbicide_2_B";
+        second = "Récolte_B";
+	mintimelag = 10
+    }
+
+
+
+
+
+
+
+
+
+}

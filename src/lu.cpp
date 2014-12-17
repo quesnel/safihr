@@ -27,26 +27,55 @@ namespace safihr {
 
 std::istream& operator>>(std::istream &is, LandUnit &lu)
 {
-    if (is) {
-        is >> lu.id >> lu.lu_min >> lu.lu_max >> lu.nb_lu >> lu.sau;
-
-        if (is)
-            return is;
-    }
-
-    is.setstate(std::ios::failbit);
-
-    return is;
+    return is >> lu.id >> lu.lu_min >> lu.lu_max >> lu.nb_lu >> lu.sau;
 }
 
 std::istream& operator>>(std::istream& is, LandUnits &lus)
 {
+    std::string header;
+    std::getline(is, header);           // Avoid the header
+
     while (is) {
         lus.lus.push_back(LandUnit());
-        is >> lus.lus.back();
+
+        if (!(is >> lus.lus.back()))    // Try to read, if it fails
+            lus.lus.pop_back();         // remove the data.
     }
 
     return is;
+}
+
+std::ostream& operator<<(std::ostream &os, LandUnit &lu)
+{
+    return os << lu.id << "\t" << lu.lu_min << "\t"
+              << lu.lu_max << "\t" << lu.nb_lu << "\t"
+              << lu.sau;
+}
+
+std::ostream& operator<<(std::ostream &os, LandUnits &lus)
+{
+    os << "ID\tLU-min\tLU-max\tNb-LU\tSAU";
+
+    for (size_t i = 0, e = lus.lus.size(); i != e; ++i)
+        os << '\n' << lus.lus[i];
+
+    os << '\n';
+
+    return os;
+}
+
+bool operator==(const LandUnit &lhs, const LandUnit &rhs)
+{
+    return lhs.id == rhs.id &&
+        lhs.lu_min == rhs.lu_min &&
+        lhs.lu_max == rhs.lu_max &&
+        lhs.nb_lu == rhs.nb_lu &&
+        lhs.sau == rhs.sau;
+}
+
+bool operator==(const LandUnits &lhs, const LandUnits &rhs)
+{
+    return lhs.lus == rhs.lus;
 }
 
 }
