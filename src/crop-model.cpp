@@ -40,9 +40,7 @@ class Crop : public vle::devs::Dynamics
 public:
     Crop(const vle::devs::DynamicsInit &init, const vle::devs::InitEventList &evts)
         : vle::devs::Dynamics(init, evts)
-    {
-        m_duration = evts.getDouble("duration");
-    }
+    {}
 
     virtual ~Crop()
     {}
@@ -98,7 +96,8 @@ public:
         for (; it != et; ++it) {
             switch (m_phase) {
             case WAIT:
-                if ((*it)->onPort("sow")) {
+                if ((*it)->onPort("in")) {
+                    m_duration = (*it)->getAttributes().getDouble("duration");
                     m_begin = time;
                     m_end = time + m_duration;
                     m_remaining = m_duration;
@@ -111,8 +110,12 @@ public:
                     throw std::logic_error("crop sown and must be havestable");
                 break;
             case HARVESTABLE:
-                if ((*it)->onPort("harvest"))
+                if ((*it)->onPort("in")) {
+                    bool harvest = (*it)->getAttributes().getBoolean("harvest");
+                    if (!harvest)
+                        throw std::logic_error("crop harvest error");
                     m_phase = HARVESTED;
+                }
                 break;
             case HARVESTED:
                 break;
@@ -134,8 +137,11 @@ public:
 
         switch (m_phase) {
         case SOWN:
-            //if (is_almost_equal <vle::devs::Time>(m_remaining, 0.0))
-            output.push_back(new vle::devs::ExternalEvent("harvestable"));
+            {
+                vle::devs::ExternalEvent *evt = new vle::devs::ExternalEvent("out");
+                evt->putAttribute("harvestable", new vle::value::Boolean(true));
+                output.push_back(evt);
+            }
             break;
         case WAIT:
         case HARVESTABLE:

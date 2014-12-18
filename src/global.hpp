@@ -23,14 +23,50 @@
 #ifndef SAFIHR_GLOBAL_HPP
 #define SAFIHR_GLOBAL_HPP
 
-#include <exception>
-#include <map>
-#include <string>
 #include <vle/utils/i18n.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/cast.hpp>
+#include <exception>
+#include <limits>
+#include <map>
+#include <string>
 
 namespace safihr {
+
+static const char *model_names[] = { "Farmer", "OperatingSystem", "Meteo" };
+
+enum ModelType
+{
+    FarmerName = 0,
+    OperatingSystemName = 1,
+    MeteoName = 2
+};
+
+inline std::string farmer_model_name()
+{
+    return model_names[static_cast <int>(FarmerName)];
+}
+
+inline std::string operatingsystem_model_name()
+{
+    return model_names[static_cast <int>(OperatingSystemName)];
+}
+
+inline std::string meteo_model_name()
+{
+    return model_names[static_cast <int>(MeteoName)];
+}
+
+inline std::string landunit_model_name(int i)
+{
+    std::vector <char> buffer(std::numeric_limits<int>::digits10 + 2);
+
+    int written = std::snprintf(&buffer[0], buffer.size(), "p%d", i);
+    if (written <= 0 or (static_cast <size_t>(written)) >= buffer.size())
+        throw std::logic_error("not enough space in land unit name construction");
+
+    return std::string(&buffer[0], written);
+}
 
 enum CropType
 {

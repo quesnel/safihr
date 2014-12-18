@@ -143,7 +143,7 @@ public:
 
         if (m_phase == WAIT) {
             vle::devs::ExternalEvent *evt = new vle::devs::ExternalEvent("out");
-            evt->putAttribute("out", new vle::value::Double(m_ru));
+            evt->putAttribute("ru", new vle::value::Double(m_ru));
             output.push_back(evt);
         }
     }

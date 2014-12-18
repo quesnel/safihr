@@ -33,6 +33,8 @@
 
 namespace safihr {
 
+
+
 class Farmer : public vle::devs::Executive,
                public vle::extension::decision::KnowledgeBase
 {
@@ -41,15 +43,54 @@ class Farmer : public vle::devs::Executive,
     CropRotation m_rotation;
     LandUnits m_lus;
 
-
+    /*
+     * Create the DEVS model:
+     *
+     *
+     *                  out  +---------+ out
+     *          +------------+  meteo  +---------------------+
+     *          |            +---------+                     |
+     *          |                                            |
+     *          |                                            |
+     *          |                                            |
+     *          |                                            |
+     *   +-----------------------------------------------------------+
+     *   |      |                                            |meteo  |
+     *   |p1    |meteo                                 in +--v---+   |
+     * +-v------v--+                  +------+------------>  p1  +---+  stade,ru
+     * |           |                  |      |p1          +------+
+     * |           |os              in|      |
+     * |   Farmer  +------------------> O.S. |            +------+
+     * |           |                  |      +------------>  p2  |-...
+     * |           <------------------+      |p2        in+------+
+     * +-----------+ack            out+------+               .
+     *                                                       .
+     *                                                       .
+     *                                                    +------+
+     *                                           . . .---->  pn  |-...
+     *                                                    +------+
+     */
     void farm_initialize()
     {
+        createModelFromClass("class_meteo", meteo_model_name());
+        addConnection(meteo_model_name(), "out",
+                      farmer_model_name(), "meteo");
+
+        createModelFromClass("class_os", operatingsystem_model_name());
+        addConnection(farmer_model_name(), "os",
+                      operatingsystem_model_name(), "in");
+        addConnection(operatingsystem_model_name(), "out",
+                      farmer_model_name(), "ack");
+
         for (size_t i = 0, e = m_lus.lus.size(); i != e; ++i) {
-            char buffer[std::numeric_limits<int>::digits10 + 2];
+            std::string lu(landunit_model_name(i));
 
-            std::snprintf(buffer, sizeof(buffer), "p%d", m_lus.lus[i].id);
+            createModelFromClass("class_p", lu);
+            addConnection(meteo_model_name(), "out", lu, "meteo");
+            addConnection(operatingsystem_model_name(), lu, lu, "in");
+            addConnection(lu, "stade", farmer_model_name(), lu);
+            addConnection(lu, "ru", farmer_model_name(), lu);
 
-            createModelFromClass("CropSoil", buffer);
         }
     }
 
