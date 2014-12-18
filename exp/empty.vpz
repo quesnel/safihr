@@ -1,10 +1,97 @@
-<?xml version="1.0"?>
-<!DOCTYPE vle_project SYSTEM "http://vle.univ-littoral.fr/vle-0.9.0.dtd">
-<vle_project version="1.0" date="" author="Gauthier Quesnel">
- <structures>
- </structures>
- <dynamics>
- </dynamics>
-  <experiment name="test" begin="0.0" duration="1.0" seed="123456789">
-  </experiment>
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE vle_project PUBLIC "-//VLE TEAM//DTD Strict//EN" "http://www.vle-project.org/vle-1.1.0.dtd">
+<vle_project version="1.0" date="2014-Dec-18 10:29:32" author="Gauthier Quesnel">
+<structures>
+<model name="Top model" type="coupled" x="0" y="0" width="1417" height="968"  >
+<submodels>
+<model name="Farmer" type="atomic" dynamics="farmer" x="500" y="211" width="100" height="75" >
+<in>
+ <port name="ack" />
+ <port name="meteo" />
+ <port name="stade" />
+</in>
+<out>
+ <port name="os" />
+</out>
+</model>
+</submodels>
+<connections>
+</connections>
+</model>
+</structures>
+<dynamics>
+<dynamic name="crop" library="Crop" package="safihr"  />
+<dynamic name="farmer" library="Agent" package="safihr"  />
+<dynamic name="meteo" library="Meteo" package="safihr"  />
+<dynamic name="os" library="OS" package="safihr"  />
+<dynamic name="soil" library="Soil" package="safihr"  />
+</dynamics>
+<classes>
+<class name="class_meteo" >
+<model name="meteo" type="atomic" dynamics="meteo" >
+<out>
+ <port name="out" />
+</out>
+</model>
+</class>
+<class name="class_os" >
+<model name="os" type="atomic" dynamics="os" height="45" >
+<out>
+ <port name="out" />
+</out>
+</model>
+</class>
+<class name="class_p" >
+<model name="p" type="coupled" width="2088" height="806"  >
+<in>
+ <port name="in" />
+ <port name="meteo" />
+</in>
+<out>
+ <port name="ru" />
+ <port name="stade" />
+</out>
+<submodels>
+<model name="crop" type="atomic" dynamics="crop" x="61" y="37" width="100" height="45" >
+<in>
+ <port name="in" />
+</in>
+<out>
+ <port name="out" />
+</out>
+</model>
+<model name="soil" type="atomic" dynamics="soil" x="251" y="230" width="100" height="45" >
+<in>
+ <port name="in" />
+</in>
+<out>
+ <port name="out" />
+</out>
+</model>
+</submodels>
+<connections>
+<connection type="output">
+ <origin model="soil" port="out" />
+ <destination model="p" port="ru" />
+</connection>
+<connection type="output">
+ <origin model="crop" port="out" />
+ <destination model="p" port="stade" />
+</connection>
+<connection type="input">
+ <origin model="p" port="in" />
+ <destination model="crop" port="in" />
+</connection>
+<connection type="input">
+ <origin model="p" port="meteo" />
+ <destination model="soil" port="in" />
+</connection>
+</connections>
+</model>
+</class>
+</classes>
+<experiment name="test" duration="1.000000000000000" begin="0.000000000000000"  >
+<views>
+</views>
+</experiment>
 </vle_project>
