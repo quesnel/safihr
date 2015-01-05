@@ -2,7 +2,7 @@
 <!DOCTYPE vle_project PUBLIC "-//VLE TEAM//DTD Strict//EN" "http://www.vle-project.org/vle-1.1.0.dtd">
 <vle_project version="1.0" date="2014-Dec-18 14:25:50" author="Gauthier Quesnel">
 <structures>
-<model name="Top model" type="coupled" x="0" y="0" width="837" height="326"  >
+<model name="Top model" type="coupled" x="0" y="0" width="818" height="968"  >
 <submodels>
 <model name="Farmer" type="atomic" dynamics="farmer" x="263" y="87" width="100" height="75" >
 <in>
@@ -29,7 +29,7 @@
 </dynamics>
 <classes>
 <class name="class_meteo" >
-<model name="meteo" type="coupled" width="837"  >
+<model name="meteo" type="coupled"  >
 <out>
  <port name="out" />
 </out>
@@ -39,7 +39,7 @@
  <port name="out" />
 </out>
 </model>
-<model name="sensor" type="atomic" dynamics="sensor" x="186" y="48" width="100" height="45" >
+<model name="sensor" type="atomic" conditions="sensor" dynamics="sensor" x="186" y="48" width="100" height="45" >
 <in>
  <port name="in" />
 </in>
@@ -58,7 +58,7 @@
 </model>
 </class>
 <class name="class_os" >
-<model name="os" type="atomic" dynamics="os" height="45" >
+<model name="os" type="atomic" dynamics="os" >
 <in>
  <port name="in" />
 </in>
@@ -116,15 +116,20 @@
 </model>
 </class>
 <class name="class_sensor" >
-<model name="sensor" type="atomic" dynamics="sensor" >
+<model name="sensor" type="atomic" conditions="sensor" dynamics="sensor" height="30" >
 </model>
 </class>
 </classes>
-<experiment name="simple" duration="3650.000000000000000" begin="0.000000000000000" combination="linear"  >
+<experiment name="simple" duration="730.000000000000000" begin="0.000000000000000" combination="linear"  >
 <conditions>
 <condition name="meteo" >
  <port name="filename" >
 <string>meteo90.csv</string>
+</port>
+</condition>
+<condition name="sensor" >
+ <port name="sensor-update" >
+<integer>0</integer>
 </port>
 </condition>
 </conditions>
