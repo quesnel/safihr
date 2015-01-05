@@ -59,11 +59,9 @@ inline std::string meteo_model_name()
 
 inline std::string landunit_model_name(int i)
 {
-    std::vector <char> buffer(std::numeric_limits<int>::digits10 + 2);
+    char buffer[std::numeric_limits<int>::digits10 + 2];
 
-    int written = std::snprintf(&buffer[0], buffer.size(), "p%d", i);
-    if (written <= 0 or (static_cast <size_t>(written)) >= buffer.size())
-        throw std::logic_error("not enough space in land unit name construction");
+    int written = std::snprintf(buffer, sizeof(buffer), "p%d", i);
 
     return std::string(&buffer[0], written);
 }

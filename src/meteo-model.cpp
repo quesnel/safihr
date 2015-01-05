@@ -42,16 +42,7 @@ std::istream& operator>>(std::istream &is, MeteoData &data)
 {
     std::string temp;
 
-    if (is) {
-        is >> temp >> data.rain >> data.etp;
-
-        if (is)
-            return is;
-    }
-
-    is.setstate(std::ios::failbit);
-
-    return is;
+    return is >> temp >> data.rain >> data.etp;
 }
 
 struct MeteoCompletedata
@@ -63,16 +54,22 @@ std::istream& operator>>(std::istream &is, MeteoCompletedata &data)
 {
     while (is) {
         data.data.push_back(MeteoData());
+
         is >> data.data.back();
+        if (is.fail()) {
+            data.data.pop_back();         // the pushed MeteoData
+            is.setstate(std::ios::eofbit);
+            return is;
+        }
     }
 
     return is;
 }
 
-
 class Meteo : public vle::devs::Dynamics
 {
     MeteoCompletedata m_data;
+    size_t m_it;
 
 public:
     Meteo(const vle::devs::DynamicsInit &init,
@@ -87,9 +84,10 @@ public:
         if (!file)
             throw std::runtime_error("meteo: failed to open data");
 
+        std::string header;
+        std::getline(file, header);
+
         file >> m_data;
-        if (file.fail())
-            throw std::runtime_error("meteo: parse fail");
     }
 
     virtual ~Meteo()
@@ -99,6 +97,8 @@ public:
     virtual vle::devs::Time init(const vle::devs::Time &time)
     {
         (void)time;
+
+        m_it = 0;
 
         return 0.0;
     }
@@ -112,7 +112,10 @@ public:
     {
         (void)time;
 
-        m_data.data.pop_front();
+        if (m_it == m_data.data.size())
+            m_it = 0;
+        else
+            ++m_it;
     }
 
     virtual void output(const vle::devs::Time &time,
@@ -123,8 +126,8 @@ public:
         vle::devs::ExternalEvent *ret = new vle::devs::ExternalEvent("out");
         vle::value::Map &msg = ret->attributes();
 
-        msg.addDouble("rain", m_data.data.front().rain);
-        msg.addDouble("etp", m_data.data.front().etp);
+        msg.addDouble("rain", m_data.data[m_it].rain);
+        msg.addDouble("etp", m_data.data[m_it].etp);
 
         output.push_back(ret);
     }
@@ -135,7 +138,7 @@ public:
         if (event.onPort("rain"))
             return new vle::value::Double(m_data.data.front().rain);
 
-        if (event.onPort("tmax"))
+        if (event.onPort("etp"))
             return new vle::value::Double(m_data.data.front().etp);
 
         return vle::devs::Dynamics::observation(event);

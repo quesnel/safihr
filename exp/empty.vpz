@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE vle_project PUBLIC "-//VLE TEAM//DTD Strict//EN" "http://www.vle-project.org/vle-1.1.0.dtd">
-<vle_project version="1.0" date="2014-Dec-18 10:29:32" author="Gauthier Quesnel">
+<vle_project version="1.0" date="2014-Dec-18 14:25:50" author="Gauthier Quesnel">
 <structures>
-<model name="Top model" type="coupled" x="0" y="0" width="1417" height="968"  >
+<model name="Top model" type="coupled" x="0" y="0" width="837" height="326"  >
 <submodels>
-<model name="Farmer" type="atomic" dynamics="farmer" x="500" y="211" width="100" height="75" >
+<model name="Farmer" type="atomic" dynamics="farmer" x="263" y="87" width="100" height="75" >
 <in>
  <port name="ack" />
  <port name="meteo" />
@@ -24,25 +24,51 @@
 <dynamic name="farmer" library="Agent" package="safihr"  />
 <dynamic name="meteo" library="Meteo" package="safihr"  />
 <dynamic name="os" library="OS" package="safihr"  />
+<dynamic name="sensor" library="Sensor" package="safihr"  />
 <dynamic name="soil" library="Soil" package="safihr"  />
 </dynamics>
 <classes>
 <class name="class_meteo" >
-<model name="meteo" type="atomic" dynamics="meteo" >
+<model name="meteo" type="coupled" width="837"  >
+<out>
+ <port name="out" />
+</out>
+<submodels>
+<model name="meteo" type="atomic" conditions="meteo" dynamics="meteo" x="225" y="154" width="100" height="45" >
 <out>
  <port name="out" />
 </out>
 </model>
+<model name="sensor" type="atomic" dynamics="sensor" x="186" y="48" width="100" height="45" >
+<in>
+ <port name="in" />
+</in>
+</model>
+</submodels>
+<connections>
+<connection type="output">
+ <origin model="meteo" port="out" />
+ <destination model="meteo" port="out" />
+</connection>
+<connection type="internal">
+ <origin model="meteo" port="out" />
+ <destination model="sensor" port="in" />
+</connection>
+</connections>
+</model>
 </class>
 <class name="class_os" >
 <model name="os" type="atomic" dynamics="os" height="45" >
+<in>
+ <port name="in" />
+</in>
 <out>
  <port name="out" />
 </out>
 </model>
 </class>
 <class name="class_p" >
-<model name="p" type="coupled" width="2088" height="806"  >
+<model name="p" type="coupled" width="837" height="315"  >
 <in>
  <port name="in" />
  <port name="meteo" />
@@ -89,8 +115,19 @@
 </connections>
 </model>
 </class>
+<class name="class_sensor" >
+<model name="sensor" type="atomic" dynamics="sensor" >
+</model>
+</class>
 </classes>
-<experiment name="test" duration="1.000000000000000" begin="0.000000000000000"  >
+<experiment name="simple" duration="3650.000000000000000" begin="0.000000000000000" combination="linear"  >
+<conditions>
+<condition name="meteo" >
+ <port name="filename" >
+<string>meteo90.csv</string>
+</port>
+</condition>
+</conditions>
 <views>
 </views>
 </experiment>

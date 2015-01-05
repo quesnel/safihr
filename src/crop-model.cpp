@@ -38,7 +38,8 @@ class Crop : public vle::devs::Dynamics
     CropPhase        m_phase;
 
 public:
-    Crop(const vle::devs::DynamicsInit &init, const vle::devs::InitEventList &evts)
+    Crop(const vle::devs::DynamicsInit &init,
+         const vle::devs::InitEventList &evts)
         : vle::devs::Dynamics(init, evts)
     {}
 
@@ -153,6 +154,26 @@ public:
     virtual vle::value::Value * observation(
         const vle::devs::ObservationEvent &event) const
     {
+        if (event.onPort("phase")) {
+            vle::value::String *str;
+
+            switch (m_phase) {
+            case SOWN:
+                str = new vle::value::String("sown");
+                break;
+            case WAIT:
+                str = new vle::value::String("wait");
+                break;
+            case HARVESTABLE:
+                str = new vle::value::String("harvestable");
+                break;
+            case HARVESTED:
+                str = new vle::value::String("harvested");
+                break;
+            }
+            return str;
+        }
+
         return vle::devs::Dynamics::observation(event);
     }
 };

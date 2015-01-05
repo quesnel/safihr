@@ -43,11 +43,15 @@ struct Crop
 
 struct Crops
 {
+    typedef std::deque <Crop>::iterator iterator;
+    typedef std::deque <Crop>::const_iterator const_iterator;
+
     std::deque <Crop> crops;
 };
 
 std::istream& operator>>(std::istream &is, Crop &crop);
 std::istream& operator>>(std::istream &is, Crops &crops);
+
 }
 
 #endif

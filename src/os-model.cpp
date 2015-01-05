@@ -30,14 +30,25 @@
 
 namespace safihr {
 
+/**
+ * Operating System (OS) receives order from the farmer model. Order are
+ * sow or harvest. OS stores the order into a list. Messages are sent to
+ * (i) farmer when (according to a duration) jobs are finished and to (ii)
+ * land unit to perturb the crop model.
+ */
 class OS : public vle::devs::Dynamics
 {
+    /**
+     * A struct to store when a job finished.
+     */
     struct record
     {
-        vle::devs::Time end;
-        vle::devs::Time eta;
-        std::string port;
-        std::string order;
+        vle::devs::Time end;            // A constant date when message
+                                        // must be send.
+        vle::devs::Time eta;            // A remaining duration before
+                                        // sending message.
+        std::string port;               // From which land unit.
+        std::string order;              // Type of order.
 
         bool operator<(const record &other) const
         {
@@ -45,6 +56,10 @@ class OS : public vle::devs::Dynamics
         }
     };
 
+    /**
+     * A struct to store message (type: sow or harvest) to land unit (id:
+     * port).
+     */
     struct message_to_p
     {
         enum MessageType { SOW, HARVEST } ;
@@ -53,8 +68,11 @@ class OS : public vle::devs::Dynamics
         MessageType msg;
     };
 
-    std::vector <message_to_p> m_message_to_p;
-    std::deque <record> m_queue;
+    std::vector <message_to_p> m_message_to_p; // Message to land unit are
+                                               // immediatly send.
+
+    std::deque <record> m_queue;        // Sorted deque using C++
+                                        // make_heap.
     vle::devs::Time m_time;
 
     void queue_add(const vle::devs::Time &time,

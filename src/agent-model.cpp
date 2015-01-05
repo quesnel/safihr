@@ -33,8 +33,6 @@
 
 namespace safihr {
 
-
-
 class Farmer : public vle::devs::Executive,
                public vle::extension::decision::KnowledgeBase
 {
@@ -85,6 +83,9 @@ class Farmer : public vle::devs::Executive,
         for (size_t i = 0, e = m_lus.lus.size(); i != e; ++i) {
             std::string lu(landunit_model_name(i));
 
+            addOutputPort(operatingsystem_model_name(), lu);
+            addInputPort(farmer_model_name(), lu);
+
             createModelFromClass("class_p", lu);
             addConnection(meteo_model_name(), "out", lu, "meteo");
             addConnection(operatingsystem_model_name(), lu, lu, "in");
@@ -95,20 +96,33 @@ class Farmer : public vle::devs::Executive,
     }
 
 public:
-    Farmer(const vle::devs::ExecutiveInit& mdl, const vle::devs::InitEventList& evts)
+    Farmer(const vle::devs::ExecutiveInit& mdl,
+           const vle::devs::InitEventList& evts)
         : vle::devs::Executive(mdl, evts)
     {
         vle::utils::Package pack("safihr");
 
         {
             std::ifstream ifs(pack.getDataFile("Assolement-test.txt"));
+            if (!ifs.is_open())
+                throw vle::utils::ModellingError(
+                    vle::fmt("farmer: fail to open %1%") % "Assolement-test.txt");
+
             ifs >> m_rotation;
         }
 
         {
             std::ifstream ifs(pack.getDataFile("Farm.txt"));
+            if (!ifs.is_open())
+                throw vle::utils::ModellingError(
+                    vle::fmt("farmer: fail to open %1%") % "Farm.txt");
             ifs >> m_lus;
         }
+
+        // TODO needs to register plan, predicates and facts.
+        addFact("rain", boost::bind(&Farmer::rain_fact, this, _1));
+        addFact("etp", boost::bind(&Farmer::etp_fact, this, _1));
+        addFact("ru", boost::bind(&Farmer::ru_fact, this, _1));
     }
 
     virtual ~Farmer()
@@ -117,6 +131,8 @@ public:
 
     virtual vle::devs::Time init(const vle::devs::Time& time)
     {
+        farm_initialize();
+
         mState = Output;
         mCurrentTime = time;
         mNextChangeTime = processChanges(time);
@@ -200,6 +216,35 @@ public:
         }
     }
 
+    double m_rain;
+    double m_etp;
+    std::map <std::string, double> m_ru;
+
+    typedef std::map <std::string, double> ru_list_type;
+
+    void rain_fact(const vle::value::Value& value)
+    {
+        m_rain = vle::value::toDouble(value);
+    }
+
+    void etp_fact(const vle::value::Value& value)
+    {
+        m_etp = vle::value::toDouble(value);
+    }
+
+    void ru_fact(const vle::value::Value& value)
+                {
+        std::string p = vle::value::toMapValue(value).getString("p");
+        double ru = vle::value::toMapValue(value).getDouble("ru");
+
+        ru_list_type::iterator it = m_ru.find(p);
+        if (it == m_ru.end())
+            throw std:: invalid_argument(
+                (vle::fmt("unknown landunit %1%") % p).str());
+
+        it->second = ru;
+    }
+
     virtual void externalTransition(const vle::devs::ExternalEventList& events,
                                     const vle::devs::Time& time)
     {
@@ -222,6 +267,16 @@ public:
                     throw vle::utils::ModellingError(
                         vle::fmt(_("Decision: unknown order `%1%'")) % order);
                 }
+            } else if (port == "meteo") {
+                applyFact("rain", *atts.get("rain"));
+                applyFact("etp", *atts.get("etp"));
+            } else if (port[0] == 'p') {
+                if (atts.exist("ru")) {
+                    vle::value::Map mp;
+                    mp.add("p", new vle::value::String(port));
+                    mp.add("ru", new vle::value::Double(atts.getDouble("ru")));
+                    applyFact("ru", mp);
+                }
             } else {
                 vle::value::Map::const_iterator jt = atts.value().find("value");
                 if (jt == atts.end()) {
@@ -230,8 +285,8 @@ public:
 
                 if (jt == atts.end() or not jt->second) {
                     throw vle::utils::ModellingError(
-                        vle::fmt(_("Decision: no value in this message: `%1%'")) %
-                        (*it));
+                        vle::fmt(_("Decision: no value in this message: `%1%'"))
+                        % (*it));
                 }
 
                 applyFact(port, *jt->second);
@@ -248,7 +303,8 @@ public:
         externalTransition(lst, time);
     }
 
-    virtual vle::value::Value* observation(const vle::devs::ObservationEvent& event) const
+    virtual vle::value::Value* observation(
+        const vle::devs::ObservationEvent& event) const
     {
         const std::string port = event.getPortName();
 
@@ -262,7 +318,8 @@ public:
             return new vle::value::String(out.str());
         } else if ((port.compare(0, 9, "Activity_") == 0) and port.size() > 9) {
             std::string activity(port, 9, std::string::npos);
-            const vle::extension::decision::Activity& act(activities().get(activity)->second);
+            const vle::extension::decision::Activity&
+                act(activities().get(activity)->second);
             std::stringstream out;
             out << act.state();
             return new vle::value::String(out.str());
@@ -272,10 +329,6 @@ public:
             return new vle::value::Boolean(ru.isAvailable());
         }
         return 0;
-    }
-
-    virtual void finish()
-    {
     }
 
 private:

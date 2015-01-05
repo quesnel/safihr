@@ -14,12 +14,10 @@ link_directories(${VLE_LIBRARY_DIRS}
 DeclareDecisionDynamics(Agent "agent-model.cpp;lu.cpp;lu.hpp;crop.cpp;crop.hpp;strategic.cpp;strategic.hpp")
 
 DeclareDevsDynamics(OS "os-model.cpp")
-
 DeclareDevsDynamics(Crop "crop-model.cpp")
-
 DeclareDevsDynamics(Soil "soil-model.cpp")
-
 DeclareDevsDynamics(Meteo "meteo-model.cpp")
+DeclareDevsDynamics(Sensor "gnuplot-sensor.cpp")
 
 #
 # this macro manage generated C++ code
