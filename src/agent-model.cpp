@@ -107,6 +107,44 @@ class Farmer : public vle::devs::Executive,
         }
     }
 
+
+    void rain_fact(const vle::value::Value& value)
+    {
+        if (m_time)
+            m_rain_prediction[0] = m_rain_prediction[1];
+        else
+            m_rain_prediction[0] = vle::value::toDouble(value);
+
+        m_rain_prediction[1] = vle::value::toDouble(value);
+
+        prediction_update(m_rain_prediction);
+    }
+
+    void etp_fact(const vle::value::Value& value)
+    {
+        if (m_time)
+            m_etp_prediction[0] = m_etp_prediction[1];
+        else
+            m_etp_prediction[0] = vle::value::toDouble(value);
+
+        m_etp_prediction[1] = vle::value::toDouble(value);
+
+        prediction_update(m_etp_prediction);
+    }
+
+    void ru_fact(const vle::value::Value& value)
+    {
+        std::string p = vle::value::toMapValue(value).getString("p");
+        double ru = vle::value::toMapValue(value).getDouble("ru");
+
+        ru_list_type::iterator it = m_ru.find(p);
+        if (it == m_ru.end())
+            throw std:: invalid_argument(
+                (vle::fmt("unknown landunit %1%") % p).str());
+
+        it->second = ru;
+    }
+
 public:
     Farmer(const vle::devs::ExecutiveInit& mdl,
            const vle::devs::InitEventList& evts)
@@ -157,7 +195,7 @@ public:
         farm_initialize();
 
         mState = Output;
-        mCurrentTime = time;
+        m_time = time;
         mNextChangeTime = processChanges(time);
 
         return 0.0;
@@ -214,7 +252,7 @@ public:
                 haveActivityInLatestActivitiesLists()) {
                 return 0.0;
             } else {
-                return mNextChangeTime.second - mCurrentTime;
+                return mNextChangeTime.second - m_time;
             }
         }
 
@@ -223,7 +261,7 @@ public:
 
     virtual void internalTransition(const vle::devs::Time& time)
     {
-        mCurrentTime = time;
+        m_time = time;
 
         switch (mState) {
         case Output:
@@ -239,47 +277,10 @@ public:
         }
     }
 
-    void rain_fact(const vle::value::Value& value)
-    {
-        if (mCurrentTime)
-            m_rain_prediction[0] = m_rain_prediction[1];
-        else
-            m_rain_prediction[0] = vle::value::toDouble(value);
-
-        m_rain_prediction[1] = vle::value::toDouble(value);
-
-        prediction_update(m_rain_prediction);
-    }
-
-    void etp_fact(const vle::value::Value& value)
-    {
-        if (mCurrentTime)
-            m_etp_prediction[0] = m_etp_prediction[1];
-        else
-            m_etp_prediction[0] = vle::value::toDouble(value);
-
-        m_etp_prediction[1] = vle::value::toDouble(value);
-
-        prediction_update(m_etp_prediction);
-    }
-
-    void ru_fact(const vle::value::Value& value)
-    {
-        std::string p = vle::value::toMapValue(value).getString("p");
-        double ru = vle::value::toMapValue(value).getDouble("ru");
-
-        ru_list_type::iterator it = m_ru.find(p);
-        if (it == m_ru.end())
-            throw std:: invalid_argument(
-                (vle::fmt("unknown landunit %1%") % p).str());
-
-        it->second = ru;
-    }
-
     virtual void externalTransition(const vle::devs::ExternalEventList& events,
                                     const vle::devs::Time& time)
     {
-        mCurrentTime = time;
+        m_time = time;
 
         for (vle::devs::ExternalEventList::const_iterator it = events.begin();
              it != events.end(); ++it) {
@@ -327,41 +328,6 @@ public:
         mState = UpdateFact;
     }
 
-    virtual void confluentTransitions(const vle::devs::Time& time,
-                                      const vle::devs::ExternalEventList& lst)
-    {
-        internalTransition(time);
-        externalTransition(lst, time);
-    }
-
-    virtual vle::value::Value* observation(
-        const vle::devs::ObservationEvent& event) const
-    {
-        const std::string port = event.getPortName();
-
-        if (port == "KnowledgeBase") {
-            std::stringstream out;
-            out << *this;
-            return new vle::value::String(out.str());
-        } else if (port == "Activities") {
-            std::stringstream out;
-            out << activities();
-            return new vle::value::String(out.str());
-        } else if ((port.compare(0, 9, "Activity_") == 0) and port.size() > 9) {
-            std::string activity(port, 9, std::string::npos);
-            const vle::extension::decision::Activity&
-                act(activities().get(activity)->second);
-            std::stringstream out;
-            out << act.state();
-            return new vle::value::String(out.str());
-        } else if ((port.compare(0, 6, "Rules_") == 0) and port.size() > 6) {
-            std::string rule(port, 6, std::string::npos);
-            const vle::extension::decision::Rule& ru(rules().get(rule));
-            return new vle::value::Boolean(ru.isAvailable());
-        }
-        return 0;
-    }
-
 private:
     enum State
     {
@@ -372,7 +338,7 @@ private:
     };
 
     vle::extension::decision::KnowledgeBase::Result mNextChangeTime;
-    vle::devs::Time mCurrentTime;
+    vle::devs::Time m_time;
     vle::utils::Rand m_rand;
     State mState;
 
