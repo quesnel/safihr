@@ -155,23 +155,16 @@ public:
         const vle::devs::ObservationEvent &event) const
     {
         if (event.onPort("phase")) {
-            vle::value::String *str;
-
             switch (m_phase) {
             case SOWN:
-                str = new vle::value::String("sown");
-                break;
+                return new vle::value::String("sown");
             case WAIT:
-                str = new vle::value::String("wait");
-                break;
+                return new vle::value::String("wait");
             case HARVESTABLE:
-                str = new vle::value::String("harvestable");
-                break;
+                return new vle::value::String("harvestable");
             case HARVESTED:
-                str = new vle::value::String("harvested");
-                break;
+                return new vle::value::String("harvested");
             }
-            return str;
         }
 
         return vle::devs::Dynamics::observation(event);
