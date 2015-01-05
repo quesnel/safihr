@@ -25,6 +25,7 @@
 #include <vle/devs/Executive.hpp>
 #include <vle/devs/ExecutiveDbg.hpp>
 #include <vle/utils/Package.hpp>
+#include <vle/utils/Rand.hpp>
 #include <vle/utils/i18n.hpp>
 #include <fstream>
 #include "global.hpp"
@@ -91,7 +92,18 @@ class Farmer : public vle::devs::Executive,
             addConnection(operatingsystem_model_name(), lu, lu, "in");
             addConnection(lu, "stade", farmer_model_name(), lu);
             addConnection(lu, "ru", farmer_model_name(), lu);
+        }
+    }
 
+    template <typename Container>
+    void prediction_update(Container &con)
+    {
+        for (size_t i = 2, e = con.size(); i != e; ++i) {
+            double sum = std::accumulate(con.begin(), con.begin() + i, 0.0);
+            double mean = sum / i;
+            double diff = std::abs(con[i - 2] - con[i - 1]);
+
+            con[i] = m_rand.normal(mean, diff == 0.0 ? 1.0 : 0.0);
         }
     }
 
@@ -99,6 +111,7 @@ public:
     Farmer(const vle::devs::ExecutiveInit& mdl,
            const vle::devs::InitEventList& evts)
         : vle::devs::Executive(mdl, evts)
+        , m_prediction_size(5)
     {
         vle::utils::Package pack("safihr");
 
@@ -118,6 +131,16 @@ public:
                     vle::fmt("farmer: fail to open %1%") % "Farm.txt");
             ifs >> m_lus;
         }
+
+        if (evts.exist("prediction-size"))
+            m_prediction_size = evts.getInt("prediction-size");
+
+        if (m_prediction_size <= 0)
+            throw vle::utils::ModellingError(
+                "farmer: prediction size is too small");
+
+        m_rain_prediction.resize(m_prediction_size + 2);
+        m_etp_prediction.resize(m_prediction_size + 2);
 
         // TODO needs to register plan, predicates and facts.
         addFact("rain", boost::bind(&Farmer::rain_fact, this, _1));
@@ -216,24 +239,32 @@ public:
         }
     }
 
-    double m_rain;
-    double m_etp;
-    std::map <std::string, double> m_ru;
-
-    typedef std::map <std::string, double> ru_list_type;
-
     void rain_fact(const vle::value::Value& value)
     {
-        m_rain = vle::value::toDouble(value);
+        if (mCurrentTime)
+            m_rain_prediction[0] = m_rain_prediction[1];
+        else
+            m_rain_prediction[0] = vle::value::toDouble(value);
+
+        m_rain_prediction[1] = vle::value::toDouble(value);
+
+        prediction_update(m_rain_prediction);
     }
 
     void etp_fact(const vle::value::Value& value)
     {
-        m_etp = vle::value::toDouble(value);
+        if (mCurrentTime)
+            m_etp_prediction[0] = m_etp_prediction[1];
+        else
+            m_etp_prediction[0] = vle::value::toDouble(value);
+
+        m_etp_prediction[1] = vle::value::toDouble(value);
+
+        prediction_update(m_etp_prediction);
     }
 
     void ru_fact(const vle::value::Value& value)
-                {
+    {
         std::string p = vle::value::toMapValue(value).getString("p");
         double ru = vle::value::toMapValue(value).getDouble("ru");
 
@@ -342,7 +373,15 @@ private:
 
     vle::extension::decision::KnowledgeBase::Result mNextChangeTime;
     vle::devs::Time mCurrentTime;
+    vle::utils::Rand m_rand;
     State mState;
+
+    typedef std::map <std::string, double> ru_list_type;
+    std::map <std::string, double> m_ru;
+
+    std::vector <double> m_rain_prediction;
+    std::vector <double> m_etp_prediction;
+    size_t m_prediction_size;
 };
 
 } // namespace safihr
