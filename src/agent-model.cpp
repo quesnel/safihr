@@ -145,6 +145,39 @@ class Farmer : public vle::devs::Executive,
         it->second = ru;
     }
 
+    double get_ru_from_landunit(const std::string& landunit)
+    {
+        ru_list_type::const_iterator it = m_ru.find(landunit);
+        if (it == m_ru.end())
+            throw vle::utils::ModellingError(
+                vle::fmt("farmer: unknown landunit %1%") % landunit);
+
+        return it->second;
+    }
+
+    bool is_plowing_or_sowing(const std::string& landunit)
+    {
+        return get_ru_from_landunit(landunit) < 38.0 and m_rain_prediction[1] < 5.0;
+    }
+
+    bool apply_herbicide_1(const std::string& landunit)
+    {
+        return get_ru_from_landunit(landunit) < 40.0 and m_rain_prediction[1] < 2.0;
+    }
+
+    bool apply_herbicide_2(const std::string& landunit)
+    {
+        return get_ru_from_landunit(landunit) < 40.0 and m_rain_prediction[1] < 2.0;
+    }
+
+    bool is_harvestable(const std::string& landunit)
+    {
+        (void)landunit;
+
+        return (m_rain_prediction[1] < 2.0) and
+            ((m_rain_prediction[1] + m_rain_prediction[0]) < 10.0);
+    }
+
 public:
     Farmer(const vle::devs::ExecutiveInit& mdl,
            const vle::devs::InitEventList& evts)
