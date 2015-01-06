@@ -136,12 +136,12 @@ class Farmer : public vle::devs::Executive,
         std::string p = vle::value::toMapValue(value).getString("p");
         double ru = vle::value::toMapValue(value).getDouble("ru");
 
-        ru_list_type::iterator it = m_ru.find(p);
-        if (it == m_ru.end())
+        crop_soil_state_list::iterator it = m_crop_soil_state.find(p);
+        if (it == m_crop_soil_state.end())
             throw std:: invalid_argument(
                 (vle::fmt("unknown landunit %1%") % p).str());
 
-        it->second = ru;
+        it->second.ru = ru;
     }
 
     std::string get_landunit_from_activity(const std::string& activity)
@@ -158,12 +158,12 @@ class Farmer : public vle::devs::Executive,
     {
         std::string landunit = get_landunit_from_activity(activity);
 
-        ru_list_type::const_iterator it = m_ru.find(landunit);
-        if (it == m_ru.end())
+        crop_soil_state_list::const_iterator it = m_crop_soil_state.find(landunit);
+        if (it == m_crop_soil_state.end())
             throw vle::utils::ModellingError(
                 vle::fmt("farmer: unknown landunit %1%") % landunit);
 
-        return it->second;
+        return it->second.ru;
     }
 
     bool is_plowing_or_sowing(const std::string& activity,
@@ -406,8 +406,14 @@ private:
     vle::utils::Rand m_rand;
     State mState;
 
-    typedef std::map <std::string, double> ru_list_type;
-    std::map <std::string, double> m_ru;
+    struct crop_soil_state
+    {
+        double ru;
+        bool harvestable;
+    };
+
+    typedef std::map <std::string, crop_soil_state> crop_soil_state_list;
+    crop_soil_state_list m_crop_soil_state;
 
     std::vector <double> m_rain_prediction;
     std::vector <double> m_etp_prediction;
