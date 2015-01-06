@@ -107,7 +107,6 @@ class Farmer : public vle::devs::Executive,
         }
     }
 
-
     void rain_fact(const vle::value::Value& value)
     {
         if (m_time)
@@ -145,8 +144,20 @@ class Farmer : public vle::devs::Executive,
         it->second = ru;
     }
 
-    double get_ru_from_landunit(const std::string& landunit)
+    std::string get_landunit_from_activity(const std::string& activity)
     {
+        std::string::size_type pos = activity.find("_");
+        if (pos == std::string::npos)
+            throw vle::utils::ModellingError(
+                vle::fmt("farmer: unknown activity %1%") % activity);
+
+        return activity.substr(pos + 1, std::string::npos);
+    }
+
+    double get_ru_from_activity(const std::string& activity)
+    {
+        std::string landunit = get_landunit_from_activity(activity);
+
         ru_list_type::const_iterator it = m_ru.find(landunit);
         if (it == m_ru.end())
             throw vle::utils::ModellingError(
@@ -155,24 +166,41 @@ class Farmer : public vle::devs::Executive,
         return it->second;
     }
 
-    bool is_plowing_or_sowing(const std::string& landunit)
+    bool is_plowing_or_sowing(const std::string& activity,
+                              const std::string& rule)
     {
-        return get_ru_from_landunit(landunit) < 38.0 and m_rain_prediction[1] < 5.0;
+        (void)rule;
+
+        return (get_ru_from_activity(activities().get(activity)->first) < 38.0)
+            and m_rain_prediction[1] < 5.0;
     }
 
-    bool apply_herbicide_1(const std::string& landunit)
+    bool apply_herbicide_1(const std::string& activity,
+                           const std::string& rule)
     {
-        return get_ru_from_landunit(landunit) < 40.0 and m_rain_prediction[1] < 2.0;
+        (void)rule;
+
+        return (get_ru_from_activity(activities().get(activity)->first) < 40.0)
+            and m_rain_prediction[1] < 2.0;
     }
 
-    bool apply_herbicide_2(const std::string& landunit)
+    bool apply_herbicide_2(const std::string& activity,
+                           const std::string& rule)
     {
-        return get_ru_from_landunit(landunit) < 40.0 and m_rain_prediction[1] < 2.0;
+        (void)rule;
+
+        return (get_ru_from_activity(activities().get(activity)->first) < 40.0)
+            and m_rain_prediction[1] < 2.0;
     }
 
-    bool is_harvestable(const std::string& landunit)
+    bool is_harvestable(const std::string& activity,
+                        const std::string& rule)
     {
-        (void)landunit;
+        (void)rule;
+
+        std::string landunit = get_landunit_from_activity(activities().get(activity)->first);
+
+        // TODO get crop model status
 
         return (m_rain_prediction[1] < 2.0) and
             ((m_rain_prediction[1] + m_rain_prediction[0]) < 10.0);
@@ -341,6 +369,9 @@ public:
                     mp.add("p", new vle::value::String(port));
                     mp.add("ru", new vle::value::Double(atts.getDouble("ru")));
                     applyFact("ru", mp);
+                }
+                if (atts.exist("harvestable")) {
+                    applyFact("ru", *atts.get("harvestable"));
                 }
             } else {
                 vle::value::Map::const_iterator jt = atts.value().find("value");
