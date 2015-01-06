@@ -63,11 +63,11 @@ set (VleCheckAndDeclareGeneratedModels_DIR
 FIND_PACKAGE(VleCheckAndDeclareGeneratedModels REQUIRED)
 SET(VLE_ABI_VERSION 1.1)
 
-VLE_CHECK_PACKAGE(DECISION vle.extension.decision)
+VLE_CHECK_PACKAGE(DECISION2 vle.extension.decision2)
 
-if (NOT DECISION_FOUND)
-  message(SEND_ERROR "Missing vle.extension.decision")
-endif (NOT DECISION_FOUND)
+if (NOT DECISION2_FOUND)
+     message(SEND_ERROR "Missing vle.extension.decision2")
+endif (NOT DECISION2_FOUND)
 
 ##
 ## Find boost
@@ -189,6 +189,23 @@ FUNCTION(DeclareDecisionDynamics name sources)
     LIBRARY DESTINATION plugins/simulator)
 ENDFUNCTION(DeclareDecisionDynamics name sources)
 
+FUNCTION(DeclareDecisionDynamics2 name sources)
+  INCLUDE_DIRECTORIES(
+    ${CMAKE_SOURCE_DIR}/src
+    ${DECISION2_INCLUDE_DIRS}
+    ${VLE_INCLUDE_DIRS}
+    ${Boost_INCLUDE_DIRS})
+  LINK_DIRECTORIES(
+    ${VLE_LIBRARY_DIRS}
+    ${Boost_LIBRARY_DIRS})
+  ADD_LIBRARY(${name} MODULE ${sources})
+  TARGET_LINK_LIBRARIES(${name} ${DECISION2_LIBRARIES}
+    ${VLE_LIBRARIES} ${Boost_LIBRARIES})
+  INSTALL(TARGETS ${name}
+    RUNTIME DESTINATION plugins/simulator
+    LIBRARY DESTINATION plugins/simulator)
+ENDFUNCTION(DeclareDecisionDynamics2 name sources)
+
 FUNCTION(DeclareDifferenceEquationDynamics name sources)
   INCLUDE_DIRECTORIES(
     ${CMAKE_SOURCE_DIR}/src
@@ -199,7 +216,7 @@ FUNCTION(DeclareDifferenceEquationDynamics name sources)
     ${VLE_LIBRARY_DIRS}
     ${Boost_LIBRARY_DIRS})
   ADD_LIBRARY(${name} MODULE ${sources})
-  TARGET_LINK_LIBRARIES(${name} ${DIFFERENCE_EQU_LIBRARIES} 
+  TARGET_LINK_LIBRARIES(${name} ${DIFFERENCE_EQU_LIBRARIES}
     ${VLE_LIBRARIES} ${Boost_LIBRARIES})
   INSTALL(TARGETS ${name}
     RUNTIME DESTINATION plugins/simulator

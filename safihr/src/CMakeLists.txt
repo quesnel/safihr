@@ -11,7 +11,7 @@ link_directories(${VLE_LIBRARY_DIRS}
   ${DIFFERENCE_EQU_LIBRARY_DIRS} ${DIFFERENTIAL_EQU_LIBRARY_DIRS}
   ${DSDEVS_LIBRARY_DIRS} ${FSA_LIBRARY_DIRS} ${PETRINET_LIBRARY_DIRS})
 
-DeclareDecisionDynamics(Agent "agent-model.cpp;lu.cpp;lu.hpp;crop.cpp;crop.hpp;strategic.cpp;strategic.hpp")
+DeclareDecisionDynamics2(Agent "agent-model.cpp;lu.cpp;lu.hpp;crop.cpp;crop.hpp;strategic.cpp;strategic.hpp")
 
 DeclareDevsDynamics(OS "os-model.cpp")
 DeclareDevsDynamics(Crop "crop-model.cpp")
