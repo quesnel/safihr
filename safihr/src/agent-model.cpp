@@ -95,115 +95,47 @@ class Farmer : public vle::devs::Executive,
         }
     }
 
+    void register_facts();
     template <typename Container>
-    void prediction_update(Container &con)
-    {
-        for (size_t i = 2, e = con.size(); i != e; ++i) {
-            double sum = std::accumulate(con.begin(), con.begin() + i, 0.0);
-            double mean = sum / i;
-            double diff = std::abs(con[i - 2] - con[i - 1]);
+    void prediction_update(Container &con);
+    void rain_fact(const vle::value::Value& value);
+    void etp_fact(const vle::value::Value& value);
+    void ru_fact(const vle::value::Value& value);
 
-            con[i] = m_rand.normal(mean, diff == 0.0 ? 1.0 : 0.0);
-        }
-    }
-
-    void rain_fact(const vle::value::Value& value)
-    {
-        if (m_time)
-            m_rain_prediction[0] = m_rain_prediction[1];
-        else
-            m_rain_prediction[0] = vle::value::toDouble(value);
-
-        m_rain_prediction[1] = vle::value::toDouble(value);
-
-        prediction_update(m_rain_prediction);
-    }
-
-    void etp_fact(const vle::value::Value& value)
-    {
-        if (m_time)
-            m_etp_prediction[0] = m_etp_prediction[1];
-        else
-            m_etp_prediction[0] = vle::value::toDouble(value);
-
-        m_etp_prediction[1] = vle::value::toDouble(value);
-
-        prediction_update(m_etp_prediction);
-    }
-
-    void ru_fact(const vle::value::Value& value)
-    {
-        std::string p = vle::value::toMapValue(value).getString("p");
-        double ru = vle::value::toMapValue(value).getDouble("ru");
-
-        crop_soil_state_list::iterator it = m_crop_soil_state.find(p);
-        if (it == m_crop_soil_state.end())
-            throw std:: invalid_argument(
-                (vle::fmt("unknown landunit %1%") % p).str());
-
-        it->second.ru = ru;
-    }
-
-    std::string get_landunit_from_activity(const std::string& activity)
-    {
-        std::string::size_type pos = activity.find("_");
-        if (pos == std::string::npos)
-            throw vle::utils::ModellingError(
-                vle::fmt("farmer: unknown activity %1%") % activity);
-
-        return activity.substr(pos + 1, std::string::npos);
-    }
-
-    double get_ru_from_activity(const std::string& activity)
-    {
-        std::string landunit = get_landunit_from_activity(activity);
-
-        crop_soil_state_list::const_iterator it = m_crop_soil_state.find(landunit);
-        if (it == m_crop_soil_state.end())
-            throw vle::utils::ModellingError(
-                vle::fmt("farmer: unknown landunit %1%") % landunit);
-
-        return it->second.ru;
-    }
-
-    bool is_plowing_or_sowing(const std::string& activity,
-                              const std::string& rule)
-    {
-        (void)rule;
-
-        return (get_ru_from_activity(activities().get(activity)->first) < 38.0)
-            and m_rain_prediction[1] < 5.0;
-    }
-
-    bool apply_herbicide_1(const std::string& activity,
-                           const std::string& rule)
-    {
-        (void)rule;
-
-        return (get_ru_from_activity(activities().get(activity)->first) < 40.0)
-            and m_rain_prediction[1] < 2.0;
-    }
-
-    bool apply_herbicide_2(const std::string& activity,
-                           const std::string& rule)
-    {
-        (void)rule;
-
-        return (get_ru_from_activity(activities().get(activity)->first) < 40.0)
-            and m_rain_prediction[1] < 2.0;
-    }
+    void register_predicates();
+    std::string get_landunit_from_activity_name(const std::string& activity);
+    double get_ru_from_activity_name(const std::string& activity);
+    double get_sum_rain(int day_number) const;
+    double get_sum_petp(int day_number) const;
 
     bool is_harvestable(const std::string& activity,
-                        const std::string& rule)
+                        const std::string& rule,
+                        const vle::extension::decision::PredicateParameters& param);
+    bool is_penetrability_plot_valid(const std::string& activity, const std::string& rule,
+                                     const vle::extension::decision::PredicateParameters& param);
+    bool is_rain_quantity_valid(const std::string& activity, const std::string& rule,
+                                const vle::extension::decision::PredicateParameters& param);
+    bool is_rain_quantity_sum_valid(const std::string& activity, const std::string& rule,
+                                    const vle::extension::decision::PredicateParameters& param);
+    bool is_petp_quantity_sum_valid(const std::string& activity, const std::string& rule,
+                                    const vle::extension::decision::PredicateParameters& param);
+    bool is_etp_quantity_valid(const std::string& activity, const std::string& rule,
+                               const vle::extension::decision::PredicateParameters& param);
+
+    void strategic_assign_crop(const vle::devs::Time& time)
     {
-        (void)rule;
+        vle::utils::Package pack("safihr");
+        std::ifstream ifs(pack.getDataFile("ITK-BS.txt"));
+        if (not ifs.is_open())
+            throw vle::utils::ModellingError(
+                vle::fmt("farmer: fail to open %1%") % "ITK-BS.txt");
 
-        std::string landunit = get_landunit_from_activity(activities().get(activity)->first);
 
-        // TODO get crop model status
+        m_crop_soil_state.insert(
+            std::make_pair <std::string, crop_soil_state>(
+                "p0", crop_soil_state(0.0, false)));
 
-        return (m_rain_prediction[1] < 2.0) and
-            ((m_rain_prediction[1] + m_rain_prediction[0]) < 10.0);
+        plan().fill(ifs, time, "_p0");
     }
 
 public:
@@ -241,10 +173,8 @@ public:
         m_rain_prediction.resize(m_prediction_size + 2);
         m_etp_prediction.resize(m_prediction_size + 2);
 
-        // TODO needs to register plan, predicates and facts.
-        addFact("rain", boost::bind(&Farmer::rain_fact, this, _1));
-        addFact("etp", boost::bind(&Farmer::etp_fact, this, _1));
-        addFact("ru", boost::bind(&Farmer::ru_fact, this, _1));
+        register_predicates();
+        register_facts();
     }
 
     virtual ~Farmer()
@@ -254,6 +184,7 @@ public:
     virtual vle::devs::Time init(const vle::devs::Time& time)
     {
         farm_initialize();
+        strategic_assign_crop(time);
 
         mState = Output;
         m_time = time;
@@ -408,6 +339,11 @@ private:
 
     struct crop_soil_state
     {
+        crop_soil_state(double _ru, bool _harvestable)
+            : ru(_ru)
+            , harvestable(_harvestable)
+        {}
+
         double ru;
         bool harvestable;
     };
@@ -415,10 +351,229 @@ private:
     typedef std::map <std::string, crop_soil_state> crop_soil_state_list;
     crop_soil_state_list m_crop_soil_state;
 
+    std::deque <double> m_rain;
+    std::deque <double> m_etp;
     std::vector <double> m_rain_prediction;
     std::vector <double> m_etp_prediction;
     size_t m_prediction_size;
 };
+
+
+//
+// Facts
+//
+
+void Farmer::register_facts()
+{
+    addFacts(this) +=
+        F("rain", &Farmer::rain_fact),
+        F("etp", &Farmer::etp_fact),
+        F("ru", &Farmer::ru_fact);
+}
+
+template <typename Container>
+void Farmer::prediction_update(Container &con)
+{
+    for (size_t i = 2, e = con.size(); i != e; ++i) {
+        double sum = std::accumulate(con.begin(), con.begin() + i, 0.0);
+        double mean = sum / i;
+        double diff = std::abs(con[i - 2] - con[i - 1]);
+
+        con[i] = m_rand.normal(mean, diff == 0.0 ? 1.0 : 0.0);
+    }
+}
+
+void Farmer::rain_fact(const vle::value::Value& value)
+{
+    double rain_quantity =  vle::value::toDouble(value);
+
+    m_rain.push_front(rain_quantity);
+
+    if (m_time)
+        m_rain_prediction[0] = m_rain_prediction[1];
+    else
+        m_rain_prediction[0] = rain_quantity;
+
+    m_rain_prediction[1] = rain_quantity;
+
+    prediction_update(m_rain_prediction);
+}
+
+void Farmer::etp_fact(const vle::value::Value& value)
+{
+    double etp_quantity = vle::value::toDouble(value);
+
+    m_etp.push_front(etp_quantity);
+
+    if (m_time)
+        m_etp_prediction[0] = m_etp_prediction[1];
+    else
+        m_etp_prediction[0] = etp_quantity;
+
+    m_etp_prediction[1] = etp_quantity;
+
+    prediction_update(m_etp_prediction);
+}
+
+void Farmer::ru_fact(const vle::value::Value& value)
+{
+    std::string p = vle::value::toMapValue(value).getString("p");
+    double ru = vle::value::toMapValue(value).getDouble("ru");
+
+    crop_soil_state_list::iterator it = m_crop_soil_state.find(p);
+    if (it == m_crop_soil_state.end())
+        throw std:: invalid_argument(
+            (vle::fmt("unknown landunit %1%") % p).str());
+
+    it->second.ru = ru;
+}
+
+//
+// Predicates
+//
+
+void Farmer::register_predicates()
+{
+    addPredicates(this) +=
+        P("harvestable", &Farmer::is_harvestable),
+        P("penetrability", &Farmer::is_penetrability_plot_valid),
+        P("rain", &Farmer::is_rain_quantity_valid),
+        P("d_rain", &Farmer::is_rain_quantity_sum_valid),
+        P("d_petp", &Farmer::is_petp_quantity_sum_valid),
+        P("etp", &Farmer::is_etp_quantity_valid);
+}
+
+std::string Farmer::get_landunit_from_activity_name(const std::string& activity)
+{
+    std::string::size_type pos = activity.find_last_of("_");
+    if (pos == std::string::npos)
+        throw vle::utils::ModellingError(
+            vle::fmt("farmer: unknown activity %1%") % activity);
+
+    return activity.substr(pos + 1, std::string::npos);
+}
+
+double Farmer::get_ru_from_activity_name(const std::string& activity)
+{
+    std::string landunit = get_landunit_from_activity_name(activity);
+
+    crop_soil_state_list::const_iterator it = m_crop_soil_state.find(landunit);
+    if (it == m_crop_soil_state.end())
+        throw vle::utils::ModellingError(
+            vle::fmt("farmer: unknown landunit %1%") % landunit);
+
+    return it->second.ru;
+}
+
+bool Farmer::is_harvestable(const std::string& activity,
+                            const std::string& rule,
+                            const vle::extension::decision::PredicateParameters& param)
+{
+    /* TODO: need to split activity to take the plot identifier and test
+       the crop state. */
+
+    return false;
+}
+
+bool Farmer::is_penetrability_plot_valid(const std::string& activity,
+                                         const std::string& rule,
+                                         const vle::extension::decision::PredicateParameters& param)
+{
+    (void)rule;
+
+    std::string op = param.getString("penetrability_operator");
+    double value = param.getDouble("penetrability_param");
+
+    if (op == "<")
+        return get_ru_from_activity_name(activity) < value;
+
+    if (op == ">=")
+        return get_ru_from_activity_name(activity) >= value;
+
+    if (op == "=")
+        return is_almost_equal(get_ru_from_activity_name(activity), value);
+
+    throw vle::utils::ModellingError("farmer: unknown penetrability_operator");
+}
+
+bool Farmer::is_rain_quantity_valid(const std::string& activity,
+                                    const std::string& rule,
+                                    const vle::extension::decision::PredicateParameters& param)
+{
+    (void)activity;
+    (void)rule;
+
+    double value = param.getDouble("rain_param");
+
+    return m_rain_prediction[1] <= value;
+}
+
+double Farmer::get_sum_rain(int day_number) const
+{
+    if (day_number <= 2)
+        return (m_rain_prediction[0] + m_rain_prediction[1]) / 2.0;
+
+    if (m_rain.size() < static_cast <size_t>(day_number))
+        throw vle::utils::ModellingError(
+            "farmer: not enough memory for rain");
+
+    return std::accumulate(m_rain.begin(), m_rain.begin() + day_number,
+                           0.0) / day_number;
+}
+
+double Farmer::get_sum_petp(int day_number) const
+{
+    if (day_number < 0 or m_etp.size() < static_cast <size_t>(day_number))
+        throw vle::utils::ModellingError(
+            "farmer: not enough memory for p-etp");
+
+    std::vector <double> petp(day_number);
+
+    std::transform(m_rain.begin(), m_rain.begin() + day_number,
+                   m_etp.begin(),
+                   petp.begin(),
+                   std::minus <double>());
+
+    return std::accumulate(petp.begin(), petp.end(),
+                           0.0) / (double)day_number;
+}
+
+bool Farmer::is_rain_quantity_sum_valid(const std::string& activity,
+                                        const std::string& rule,
+                                        const vle::extension::decision::PredicateParameters& param)
+{
+    (void)activity;
+    (void)rule;
+
+    double day_number = param.getDouble("rain_day_number");
+    double value = param.getDouble("rain_sum");
+
+    return get_sum_rain(static_cast <int>(day_number)) <= value;
+}
+
+bool Farmer::is_petp_quantity_sum_valid(const std::string& activity,
+                                        const std::string& rule,
+                                        const vle::extension::decision::PredicateParameters& param)
+{
+    (void)activity;
+    (void)rule;
+
+    double day_number = param.getDouble("rain_day_number");
+    double value = param.getDouble("p-etp_sum");
+
+    return get_sum_petp(static_cast <int>(day_number)) <= value;
+}
+
+bool Farmer::is_etp_quantity_valid(const std::string& activity,
+                                   const std::string& rule,
+                                   const vle::extension::decision::PredicateParameters& param)
+{
+    (void)activity;
+    (void)rule;
+
+    return m_etp_prediction[1] > param.getDouble("etp_param");
+}
+
 
 } // namespace safihr
 

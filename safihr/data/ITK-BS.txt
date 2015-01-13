@@ -1,5 +1,53 @@
 #ITK BS - MDE FARM
 
+#Predicates
+
+predicates { #Liste des prédicats
+        predicate {
+                id = "penetrabiliteParcelle_sup_38";
+                type = "penetrability";
+                parameters {
+                penetrability_operator = ">=";
+                      penetrability_param = 38.0;
+                }
+        }
+
+        predicate {
+                id = "penetrabiliteParcelle_inf_38";
+                type = "penetrability";
+                parameters {
+		                penetrability_operator = "<";
+                penetrability_param = 38.0;
+                }
+        }
+
+        predicate {
+                id = "pluie_5";
+                type = "rain";
+                parameters {
+                rain_param = 5.0;
+                }
+        }
+
+        predicate {
+                id = "2j_pluie_10";
+                type = "d_rain";
+                parameters {
+                rain_day_number = 2.0;
+                rain_sum = 10.0;
+                }
+        }
+
+        predicate {
+                id = "3j_pluie_20";
+                type = "d_rain";
+                parameters {
+                rain_day_number = 3.0;
+                rain_sum = 20.0;
+                }
+        }
+}
+
 ## Rules
 rules { # liste des règles
 
@@ -20,108 +68,104 @@ rules { # liste des règles
 
     rule {
         id = "Dechaumage_optimal";
-        predicates = "penetrabiliteParcelle_inf_38", "pluie_6";
+        predicates = "penetrabiliteParcelle_inf_38", "pluie_5";
  }
+ rule {
+ id = "Recolte_BS";
+ predicates = "harvestable";
+ }
+
 }
 
 ## Activities
 activities { # liste des activites
-    
+
     activity {
         id = "Recolte_BS_1";  #sur 1/3 de la surface
      temporal {
-                minstart = 01/01/10;
-		maxstart = 01/15/10;	#tirer au hasard la date de départ entre min et max start
+                minstart = "+0-10-1";
+                maxstart = "+0-10-15";        #tirer au hasard la date de départ entre min et max start
         }
         rules = "Recolte_BS";
         ressources = 2;
-	speed_ha_per_day = 10;
+        speed_ha_per_day = 10;
     }
 
     activity {
         id = "Recolte_BS_2";    #sur 1/3 de la surface
-     temporal {
-    }
         rules = "Recolte_BS";
         ressources = 2;
-	speed_ha_per_day = 10;
+        speed_ha_per_day = 10;
     }
 
     activity {
         id = "Recolte_BS_3";  #sur 1/3 de la surface
-     temporal {
-     }
         rules = "Recolte_BS";
         ressources = 2;
-	speed_ha_per_day = 10;
+        speed_ha_per_day = 10;
     }
 
     activity {
         id = "Dechaumage_1_BS";
         temporal {
-                maxfinish = 00/30/11;
+                maxfinish = "+0-11-30";
         }
         rules = "Dechaumage_sub_optimal", "Dechaumage_optimal";
         ressources = 1;
-	speed_ha_per_day = 20;
+        speed_ha_per_day = 20;
     }
 
 activity {
         id = "Dechaumage_2_BS";
          temporal {
-                maxfinish = 00/30/11;
+                maxfinish = "+0-11-30";
         }
         rules = "Dechaumage_sub_optimal", "Dechaumage_optimal";
         ressources = 1;
-	speed_ha_per_day = 20;
+        speed_ha_per_day = 20;
     }
 
 activity {
         id = "Dechaumage_3_BS";
         temporal {
-                maxfinish = 00/30/11;
+                maxfinish = "+0-11-30";
         }
         rules = "Dechaumage_sub_optimal", "Dechaumage_optimal";
         ressources = 1;
-	speed_ha_per_day = 20;
+        speed_ha_per_day = 20;
     }
 
 }
 
 ## Precedences
 precedences {
-    precedence {
-        type = FS; 
-        first = "??"; ##  l'activité "récolte" de la culture précédente  ou "paille" si la culture précédente est du blé ou de l'orge
-        second = "Dechaumage_1_BS"; 
-    }
+    # precedence {
+    #     type = FS;
+    #     first = "??"; ##  l'activité "récolte" de la culture précédente  ou "paille" si la culture précédente est du blé ou de l'orge
+    #     second = "Dechaumage_1_BS";
+    # }
     precedence {
         type = FS;
         first = "Dechaumage_1_BS";
         second = "Dechaumage_2_BS";
-	mintimelag = 15
+        mintimelag = 15;
     }
  precedence {
         type = FS;
         first = "Dechaumage_2_BS";
         second = "Dechaumage_3_BS";
-	mintimelag = 15
+        mintimelag = 15;
     }
-precedences {
     precedence {
-        type = FS; 
-        first = "Récolte_BS_1"; 
-        second = "Récolte_BS_2"; 
-	mintimelag = 10
+        type = FS;
+        first = "Recolte_BS_1";
+        second = "Recolte_BS_2";
+        mintimelag = 10;
     }
-precedences {
     precedence {
-        type = FS; 
-        first = "Récolte_BS_2"; 
-        second = "Récolte_BS_3"; 
-	mintimelag = 10
+        type = FS;
+        first = "Recolte_BS_2";
+        second = "Recolte_BS_3";
+        mintimelag = 10;
     }
-}    
-
-
-
+}
