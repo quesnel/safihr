@@ -136,10 +136,10 @@ public:
         const vle::devs::ObservationEvent &event) const
     {
         if (event.onPort("rain"))
-            return new vle::value::Double(m_data.data.front().rain);
+            return new vle::value::Double(m_data.data[m_it].rain);
 
         if (event.onPort("etp"))
-            return new vle::value::Double(m_data.data.front().etp);
+            return new vle::value::Double(m_data.data[m_it].etp);
 
         return vle::devs::Dynamics::observation(event);
     }

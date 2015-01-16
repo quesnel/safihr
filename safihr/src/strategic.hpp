@@ -33,6 +33,10 @@ namespace safihr {
 
 struct CropRotation
 {
+    typedef std::map <int, std::vector <CropType>> crop_rotation_type;
+    typedef crop_rotation_type::const_iterator const_iterator;
+    typedef crop_rotation_type::iterator iterator;
+
     std::vector <int> years;
     std::map <int, std::vector <CropType>> crops;
 };

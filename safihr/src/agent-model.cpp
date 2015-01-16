@@ -28,6 +28,7 @@
 #include <vle/utils/Rand.hpp>
 #include <vle/utils/i18n.hpp>
 #include <fstream>
+#include <iostream>
 #include "global.hpp"
 #include "strategic.hpp"
 #include "lu.hpp"
@@ -125,17 +126,35 @@ class Farmer : public vle::devs::Executive,
     void strategic_assign_crop(const vle::devs::Time& time)
     {
         vle::utils::Package pack("safihr");
-        std::ifstream ifs(pack.getDataFile("ITK-BS.txt"));
-        if (not ifs.is_open())
-            throw vle::utils::ModellingError(
-                vle::fmt("farmer: fail to open %1%") % "ITK-BS.txt");
 
+        int i = 1;
+        for (CropRotation::const_iterator it = m_rotation.crops.begin();
+             it != m_rotation.crops.end(); ++it) {
+            m_crop_soil_state.insert(
+                std::make_pair <std::string, crop_soil_state>(
+                    (vle::fmt("p%1%") % it->first).str(),
+                    crop_soil_state(0.0, false)));
 
-        m_crop_soil_state.insert(
-            std::make_pair <std::string, crop_soil_state>(
-                "p0", crop_soil_state(0.0, false)));
+            std::string filename = pack.getDataFile("ITK-BS.txt");
+            std::ifstream ifs(filename.c_str());
+            if (not ifs.is_open())
+                throw vle::utils::ModellingError(
+                    vle::fmt("farmer: fail to open %1%") % filename);
 
-        plan().fill(ifs, time, "_p0");
+            try {
+                plan().fill(ifs, time, (vle::fmt("_p%1%") % it->first).str());
+            } catch (const std::exception& e) {
+                throw vle::utils::ModellingError(
+                    vle::fmt("farmer: fail to read %1% (plot: %2%): %3%") %
+                    filename % i % e.what());
+            }
+
+            DTraceModel(vle::fmt("agent assign crop: %1% to plot: %2%") %
+                        crop_to_string(it->second[0]) %
+                        it->first);
+
+            ++i;
+        }
     }
 
 public:
@@ -204,6 +223,7 @@ public:
                 const Farmer::ActivityList& lst = latestStartedActivities();
                 Farmer::ActivityList::const_iterator it = lst.begin();
                 for (; it != lst.end(); ++it) {
+                    std::cout << "farmer output " << (*it)->first << std::endl;
                     (*it)->second.output((*it)->first, output);
                 }
             }
@@ -233,6 +253,8 @@ public:
 
     virtual vle::devs::Time timeAdvance() const
     {
+        // std::cout << "farmer: ta: " << activities() << std::endl;
+
         switch (mState) {
         case Init:
         case Output:
@@ -280,6 +302,8 @@ public:
             const vle::value::Map& atts = (*it)->getAttributes();
 
             if (port == "ack") {
+                TraceModel("farmer receives ack");
+
                 const std::string& activity(atts.getString("name"));
                 const std::string& order(atts.getString("value"));
 
@@ -292,9 +316,11 @@ public:
                         vle::fmt(_("Decision: unknown order `%1%'")) % order);
                 }
             } else if (port == "meteo") {
+                TraceModel("farmer receives meteo");
                 applyFact("rain", *atts.get("rain"));
                 applyFact("etp", *atts.get("etp"));
             } else if (port[0] == 'p') {
+                TraceModel("farmer receives ru");
                 if (atts.exist("ru")) {
                     vle::value::Map mp;
                     mp.add("p", new vle::value::String(port));
@@ -397,6 +423,8 @@ void Farmer::rain_fact(const vle::value::Value& value)
     m_rain_prediction[1] = rain_quantity;
 
     prediction_update(m_rain_prediction);
+
+    TraceModel("rain_fact updated");
 }
 
 void Farmer::etp_fact(const vle::value::Value& value)
@@ -413,6 +441,8 @@ void Farmer::etp_fact(const vle::value::Value& value)
     m_etp_prediction[1] = etp_quantity;
 
     prediction_update(m_etp_prediction);
+
+    TraceModel("etp_fact updated");
 }
 
 void Farmer::ru_fact(const vle::value::Value& value)
@@ -426,6 +456,8 @@ void Farmer::ru_fact(const vle::value::Value& value)
             (vle::fmt("unknown landunit %1%") % p).str());
 
     it->second.ru = ru;
+
+    TraceModel(vle::fmt("ru_fact for %1%=%2%") % it->first % ru);
 }
 
 //
@@ -438,7 +470,7 @@ void Farmer::register_predicates()
         P("harvestable", &Farmer::is_harvestable),
         P("penetrability", &Farmer::is_penetrability_plot_valid),
         P("rain", &Farmer::is_rain_quantity_valid),
-        P("d_rain", &Farmer::is_rain_quantity_sum_valid),
+        P("sum_rain", &Farmer::is_rain_quantity_sum_valid),
         P("d_petp", &Farmer::is_petp_quantity_sum_valid),
         P("etp", &Farmer::is_etp_quantity_valid);
 }
@@ -469,6 +501,10 @@ bool Farmer::is_harvestable(const std::string& activity,
                             const std::string& rule,
                             const vle::extension::decision::PredicateParameters& param)
 {
+    (void)activity;
+    (void)rule;
+    (void)param;
+
     /* TODO: need to split activity to take the plot identifier and test
        the crop state. */
 
@@ -482,7 +518,7 @@ bool Farmer::is_penetrability_plot_valid(const std::string& activity,
     (void)rule;
 
     std::string op = param.getString("penetrability_operator");
-    double value = param.getDouble("penetrability_param");
+    double value = param.getDouble("penetrability_threshold");
 
     if (op == "<")
         return get_ru_from_activity_name(activity) < value;
@@ -493,7 +529,8 @@ bool Farmer::is_penetrability_plot_valid(const std::string& activity,
     if (op == "=")
         return is_almost_equal(get_ru_from_activity_name(activity), value);
 
-    throw vle::utils::ModellingError("farmer: unknown penetrability_operator");
+    throw vle::utils::ModellingError(
+        vle::fmt("farmer predicate penetrability: unknown operator %1%") % op);
 }
 
 bool Farmer::is_rain_quantity_valid(const std::string& activity,
@@ -503,9 +540,20 @@ bool Farmer::is_rain_quantity_valid(const std::string& activity,
     (void)activity;
     (void)rule;
 
-    double value = param.getDouble("rain_param");
+    std::string op = param.getString("rain_operator");
+    double value = param.getDouble("rain_threshold");
 
-    return m_rain_prediction[1] <= value;
+    if (op == "<=")
+        return m_rain_prediction[1] <= value;
+
+    if (op == ">=")
+        return m_rain_prediction[1] >= value;
+
+    if (op == "=")
+        return is_almost_equal(m_rain_prediction[1], value);
+
+    throw vle::utils::ModellingError(
+        vle::fmt("farmer predicate rain: unknown operator %1%") % op);
 }
 
 double Farmer::get_sum_rain(int day_number) const
@@ -545,10 +593,15 @@ bool Farmer::is_rain_quantity_sum_valid(const std::string& activity,
     (void)activity;
     (void)rule;
 
-    double day_number = param.getDouble("rain_day_number");
-    double value = param.getDouble("rain_sum");
+    std::string op = param.getString("sum_rain_operator");
+    double number = param.getDouble("sum_rain_number");
+    double value = param.getDouble("sum_rain_threshold");
 
-    return get_sum_rain(static_cast <int>(day_number)) <= value;
+    if (op == "<=")
+        return get_sum_rain(static_cast <int>(number)) <= value;
+
+    throw vle::utils::ModellingError(
+        vle::fmt("farmer predicate sum_rain: unknown operator %1%") % op);
 }
 
 bool Farmer::is_petp_quantity_sum_valid(const std::string& activity,

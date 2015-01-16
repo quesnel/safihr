@@ -115,7 +115,9 @@ public:
                 if ((*it)->getAttributes().exist("rain")) {
                     --m_received;
                     m_p = (*it)->getDoubleAttributeValue("rain");
-                } else if ((*it)->getAttributes().exist("etp")) {
+                }
+
+                if ((*it)->getAttributes().exist("etp")) {
                     m_etp = (*it)->getDoubleAttributeValue("etp");
                     --m_received;
                 }
@@ -126,6 +128,8 @@ public:
             m_ru = std::max(0.0,
                             std::min(40.0,
                                      m_ru + m_p - ((m_ru / 40.0) * m_etp)));
+
+            m_phase = SEND;
         }
     }
 
@@ -151,6 +155,9 @@ public:
     virtual vle::value::Value * observation(
         const vle::devs::ObservationEvent &event) const
     {
+        if (event.onPort("ru"))
+            return new vle::value::Double(m_ru);
+
         return vle::devs::Dynamics::observation(event);
     }
 };
