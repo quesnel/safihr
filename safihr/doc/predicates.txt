@@ -1,0 +1,12 @@
+- penetrabiliteParcelle_xx : RU = xx
+- penetrabiliteParcelle_inf_xx : RU <= xx
+- penetrabiliteParcelle_sup_xx : RU >= xx
+- pluie_xx : pluie du jour <= xx
+- yj_pluie_xx : somme des pluies sur y derniers jours <= xx 
+- yj_P-ETP_inf_xx : somme sur les y derniers jours de (P-ETP) <= xx 
+- ETP_sup_x-z --> l'ETP doit être supérieure à x.z
+
+
+- une particularité pour la récolte de la BS (betterave sucrière) : il faut diviser la surface par trois et lancer 3 chantiers successivement avec un tilmelag (normalement j'ai fait un plan en ce sens)
+
+- une modification pour tous les ITK : pour l’enchaînement entre ITK l'ITK suivant débute après la dernière opération de l'ITK précédent, à savoir : "paille" si la culture précédente est de l'orge ou du blé, "enroulage_L" si c'est du lin, "récolte" si c'est pois ou colza, "récolte_BS" si c'est de la BS et "recolte_PDT" si c'est de la PDT. 
