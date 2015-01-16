@@ -1,64 +1,105 @@
-#ITK PDT - MDE FARM
+#Potatoes (Po) crop management - MDE FARM
+
+#Predicates
+
+predicates { #Predicates list
+	predicate {
+		id = "FieldPenetrability_sup_38";
+		type = "penetrability";
+		parameter {	
+		penetrability_operator = ">=";
+      		penetrability_threshold = 38.0;
+		}
+	}
+
+	predicate {
+		id = "FieldPenetrability_inf_38";
+		type = "penetrability";
+		parameter {	
+		penetrability_operator = "<";
+     	   	penetrability_threshold = 38.0;
+		}
+	}
+	
+	predicate {
+		id = "rain_5";
+		type = "rain";
+		parameter {
+		rain_operator = "<=";	
+		rain_threshold = 5.0;
+		}
+	}
+
+	predicate {
+		id = "2d_rain_10";
+		type = "sum_rain";
+		parameter {	
+		sum_rain_operator = "<=";	
+		sum_rain_number = 2.0;
+        	sum_rain_threshold = 10;
+		}
+	}
+}
 
 ## Rules
-rules { # liste des règles
+rules { #Rules list
 
     rule {
-        id = "Recolte_PDT";
-        predicates = "penetrabiliteParcelle_inf_38", "pluie_5", "2j_pluie_10";
+        id = "Harvest_Po";
+        predicates = "FieldPenetrability_inf_38", "rain_5", "2d_rain_10";
     }
 
     rule {
-        id = "Dechaumage_sub_optimal";
-        predicates = "penetrabiliteParcelle_sup_38", "pluie_5", "2j_pluie_10";
+        id = "StublePlow_sub_optimal";
+        predicates = "FieldPenetrability_sup_38", "rain_5", "2d_rain_10";
     }
 
     rule {
-        id = "Dechaumage_optimal";
-        predicates = "penetrabiliteParcelle_inf_38", "pluie_6";
+        id = "StublePlow_optimal";
+        predicates = "FieldPenetrability_inf_38", "rain_5";
  }
 }
 
 ## Activities
-activities { # liste des activites
+activities { #Activities list
     
 activity {
-        id = "Recolte_PDT";  
+        id = "Harvest_Po";  
       temporal {
-                minstart = 01/10/09;
-		maxstart = 01/20/09;	#tirer au hasard la date de départ entre min et max start
+                minstart = "+1-09-10";
+		maxstart = "+1-09-20";	#Actual first possible day of sowing is randomely chosen between minstart and maxstart
         }
-        rules = "Recolte_PDT";
+        rules = "Harvest_Po";
         ressources = 2;
 	speed_ha_per_day = 4;
     }
 
     activity {
-        id = "Dechaumage_1_PDT";
+        id = "StublePlow_1_Po";
         temporal {
-                maxfinish = 00/30/11;
+                maxfinish = "+0-11-30";
         }
-        rules = "Dechaumage_sub_optimal", "Dechaumage_optimal";
+        rules = "StublePlow_sub_optimal", "StublePlow_optimal";
         ressources = 1;
 	speed_ha_per_day = 20;
     }
 
 activity {
-        id = "Dechaumage_2_PDT";
+        id = "StublePlow_2_Po";
          temporal {
-                maxfinish = 00/30/11;
+                maxfinish = "+0-11-30";
         }
-        rules = "Dechaumage_sub_optimal", "Dechaumage_optimal";
+        rules = "StublePlow_sub_optimal", "StublePlow_optimal";
         ressources = 1;
 	speed_ha_per_day = 20;
     }
 
 activity {
-        id = "Dechaumage_3_PDT";
+        id = "StublePlow_3_Po";
         temporal {
-                maxfinish = 00/30/11;
+                maxfinish = "+0-11-30";
         }
-        rules = "Dechaumage_sub_optimal", "Dechaumage_optimal";
+        rules = "StublePlow_sub_optimal", "StublePlow_optimal";
         ressources = 1;
 	speed_ha_per_day = 20;
     }
@@ -69,20 +110,20 @@ activity {
 precedences {
     precedence {
         type = FS; 
-        first = "??"; ##  l'activité "récolte" de la culture précédente  ou "paille" si la culture précédente est du blé ou de l'orge
-        second = "Dechaumage_1_PDT"; 
+        first = "??";   ## last activities of the preceding crop
+        second = "StublePlow_1_Po"; 
     }
     precedence {
         type = FS;
-        first = "Dechaumage_1_PDT";
-        second = "Dechaumage_2_PDT";
-	mintimelag = 15
+        first = "StublePlow_1_Po";
+        second = "StublePlow_2_Po";
+	mintimelag = 15;
     }
- precedence {
+    precedence {
         type = FS;
-        first = "Dechaumage_2_PDT";
-        second = "Dechaumage_3_PDT";
-	mintimelag = 15
+        first = "StublePlow_2_Po";
+        second = "StublePlow_3_Po";
+	mintimelag = 15;
     }
 }    
 

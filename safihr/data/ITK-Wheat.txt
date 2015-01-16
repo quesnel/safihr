@@ -1,60 +1,159 @@
-#ITK BLE - MDE FARM
+#Wheat (W) crop management - MDE FARM
+
+#Predicates
+
+predicates { #Predicates list
+	predicate {
+		id = "FieldPenetrability_sup_38";
+		type = "penetrability";
+		parameter {	
+		penetrability_operator = ">=";
+      		penetrability_threshold = 38.0;
+		}
+	}
+
+	predicate {
+		id = "FieldPenetrability_inf_38";
+		type = "penetrability";
+		parameter {	
+		penetrability_operator = "<";
+     	   	penetrability_threshold = 38.0;
+		}
+	}
+
+	predicate {
+		id = "FieldPenetrability_inf_40";
+		type = "penetrability";
+		parameter {	
+		penetrability_operator = "<";
+     	   	penetrability_threshold = 40.0;
+		}
+	}
+	
+	predicate {
+		id = "FieldPenetrability_40";
+		type = "penetrability";
+		parameter {	
+		penetrability_operator = "=";
+     	   	penetrability_threshold = 40.0;
+		}
+	}
+
+	predicate {
+		id = "rain_5";
+		type = "rain";
+		parameter {	
+		rain_operator = "<=";
+		rain_threshold = 5.0;
+		}
+	}
+
+	predicate {
+		id = "rain_2";
+		type = "rain";
+		parameter {	
+		rain_operator = "<=";
+		rain_threshold = 2.0;
+		}
+	}
+
+	predicate {
+		id = "2d_rain_10";
+		type = "sum_rain";
+		parameter {	
+		sum_rain_operator = "<=";	
+		sum_rain_number = 2.0;
+        	sum_rain_threshold = 10;
+		}
+	}
+
+	predicate {
+		id = "2d_rain_8";
+		type = "sum_rain";
+		parameter {	
+		sum_rain_operator = "<=";	
+		sum_rain_number = 2.0;
+        	sum_rain_threshold = 8.0;
+		}
+	}
+
+	predicate {
+		id = "3d_rain_20";
+		type = "sum_rain";
+		parameter {	
+		sum_rain_operator = "<=";	
+		sum_rain_number = 3.0;
+        	sum_rain_threshold = 20.0;
+		}
+	}
+
+	predicate {
+		id = "2d_R-PET_inf_0";
+		type = "sum_R-PET";
+		parameter {	
+		sum_R-PET_operator = "<=";	
+		sum_R-PET_number = 2.0;
+        	sum_R-PET_threshold = 0.0;
+		}
+	}
+
+}
 
 ## Rules
-rules { # liste des règles
+rules { # rules list
     rule {
-        id = "Semis_sub_optimal";
-        predicates = "penetrabiliteParcelle_40", "pluie_5", "2j_pluie_8", "3j_pluie_20";
+        id = "Sowing_sub_optimal";
+        predicates = "FieldPenetrability_40", "rain_5", "2d_rain_8", "3d_rain_20";
     }
 
     rule {
-        id = "Semis_optimal";
-        predicates = "penetrabiliteParcelle_inf_40", "pluie_5", "2j_pluie_8";
+        id = "Sowing_optimal";
+        predicates = "FieldPenetrability_inf_40", "rain_5", "2d_rain_8";
     }
 
 
     rule {
         id = "Herbicide";
-        predicates = "penetrabiliteParcelle_40", "pluie_2";
+        predicates = "FieldPenetrability_40", "rain_2";
     }
 
     rule {
-        id = "Recolte";
-        predicates = "pluie_2", "2j_pluie_10";
+        id = "Harvest";
+        predicates = "rain_2", "2d_rain_10";
     }
 
     rule {
-        id = "Dechaumage_sub_optimal";
-        predicates = "penetrabiliteParcelle_sup_38", "pluie_5", "2j_pluie_10";
+        id = "StublePlow_sub_optimal";
+        predicates = "FieldPenetrability_sup_38", "rain_5", "2d_rain_10";
     }
 
     rule {
-        id = "Dechaumage_optimal";
-        predicates = "penetrabiliteParcelle_inf_38", "pluie_6";
+        id = "StublePlow_optimal";
+        predicates = "FieldPenetrability_inf_38", "rain_5";
     }
     rule {
-        id = "Paille";
-        predicates = "penetrabiliteParcelle_inf_40", "2j_P-ETP_inf_0";
+        id = "Pressing";
+        predicates = "FieldPenetrability_inf_40", "2d_R-PET_inf_0";
     }
 }
 
 ## Activities
-activities { # liste des activites
+activities { # Activites list
     activity {
-        id = "Semis_B";
+        id = "Sowing_W";
         temporal {
-                minstart = 00/01/10;
-                maxfinish = 00/31/10;
+                minstart = "+0-10-1";
+                maxfinish = "+0-10-31";
         }
-        rules = "Semis_sub_optimal", "Semis_optimal";
+        rules = "Sowing_sub_optimal", "Sowing_optimal";
 	ressources = 2;
 	speed_ha_per_day = 10;
     }
 
     activity {
-        id = "Herbicide_1_B";
+        id = "Herbicide_1_W";
         temporal {
-                minstart = 00/01/11;
+                minstart = "+0-11-1";
                         }
         rules = "Herbicide";
 	ressources = 1;
@@ -62,9 +161,9 @@ activities { # liste des activites
     }
 
     activity {
-        id = "Herbicide_2_B";
+        id = "Herbicide_2_W";
         temporal {
-                minstart = 01/05/07;
+                minstart = "+1-7-5";
         }
         rules = "Herbicide";
 	ressources = 1;
@@ -72,51 +171,49 @@ activities { # liste des activites
     }
 
     activity {
-        id = "Recolte_B";
+        id = "Harvest_W";
         temporal {
-                minstart = 01/15/07;
-		maxstart = 01/01/08;	#tirer au hasard la date de départ entre min et max start
+                minstart = "+1-7-15";
+		maxstart = "+1-7-31";	#Actual first possible day of sowing is randomely chosen between minstart and maxstart
         }
-        rules = "Recolte";
+        rules = "Harvest";
         ressources = 2;
 	speed_ha_per_day = 15;
     }
 
     activity {
-        id = "Paille_B";
-        temporal {
-        }
-        rules = "Paille";
+        id = "Pressing_W";
+        rules = "Pressing";
 	ressources = 2;
 	speed_ha_per_day = 15;
     }
 
     activity {
-        id = "Dechaumage_1_B";
+        id = "StublePlow_1_W";
         temporal {
-                maxfinish = 00/30/09;
+                maxfinish = "+0-9-30";
         }
-        rules = "Dechaumage_sub_optimal", "Dechaumage_optimal";
+        rules = "StublePlow_sub_optimal", "StublePlow_optimal";
         ressources = 1;
 	speed_ha_per_day = 20;
     }
 
-activity {
-        id = "Dechaumage_2_B";
+	activity {
+        id = "StublePlow_2_W";
         temporal {
-                maxfinish = 00/30/09;
+                maxfinish = "+0-9-30";
         }
-        rules = "Dechaumage_sub_optimal", "Dechaumage_optimal";
+        rules = "StublePlow_sub_optimal", "StublePlow_optimal";
         ressources = 1;
 	speed_ha_per_day = 20;
     }
 
-activity {
-        id = "Dechaumage_3_B";
+	activity {
+        id = "StublePlow_3_W";
         temporal {
-                maxfinish = 00/30/09;
+                maxfinish = "+0-9-30";
         }
-        rules = "Dechaumage_sub_optimal", "Dechaumage_optimal";
+        rules = "StublePlow_sub_optimal", "StublePlow_optimal";
         ressources = 1;
 	speed_ha_per_day = 20;
     }
@@ -127,46 +224,46 @@ activity {
 precedences {
     precedence {
         type = FS; 
-        first = "??"; ## l'activité "récolte" de la culture précédente  ou "paille" si la culture précédente est du blé ou de l'orge
-        second = "Dechaumage_1_B"; 
+        first = "??"; ## last activities of the preceding crop
+        second = "StublePlow_1_W"; 
     }
     precedence {
         type = FS;
-        first = "Dechaumage_1_B";
-        second = "Dechaumage_2_B";
-	mintimelag = 15
+        first = "StublePlow_1_W";
+        second = "StublePlow_2_W";
+	mintimelag = 15;
     }
  precedence {
         type = FS;
-        first = "Dechaumage_2_B";
-        second = "Dechaumage_3_B";
-	mintimelag = 15
+        first = "StublePlow_2_W";
+        second = "StublePlow_3_W";
+	mintimelag = 15;
     }
     precedence {
         type = FS;
-        first = "??";## l'activité "récolte" de la culture précédente  ou "paille" si la culture précédente est du blé ou de l'orge
-        second = "Semis_B";
+        first = "??"; ## last activities of the preceding crop
+        second = "Sowing_W";
     }
    precedence {
         type = FS;
-        first = "Semis_B";
-        second = "Herbicide_1_B";
+        first = "Sowing_W";
+        second = "Herbicide_1_W";
     }
    precedence {
         type = FS;
-        first = "Herbicide_1_B";
-        second = "Herbicide_2_B";
+        first = "Herbicide_1_W";
+        second = "Herbicide_2_W";
     }
    precedence {
         type = FS;
-        first = "Herbicide_2_B";
-        second = "Récolte_B";
-	mintimelag = 10
+        first = "Herbicide_2_W";
+        second = "Récolte_W";
+	mintimelag = 10;
     }
   precedence {
         type = FS;
-        first = "Récolte_B";
-        second = "Paille_B";
+        first = "Harvest_W";
+        second = "Pressing_W";
     }
 
 
