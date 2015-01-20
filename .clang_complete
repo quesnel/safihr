@@ -1,0 +1,4 @@
+-DDEBUG
+-std=c++03
+-I/media/Stock/usr/include/vle-1.1
+-I/media/Stock/homevle/pkgs-1.1/vle.extension.decision2/src
