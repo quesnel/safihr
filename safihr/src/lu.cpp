@@ -35,11 +35,14 @@ std::istream& operator>>(std::istream& is, LandUnits &lus)
     std::string header;
     std::getline(is, header);           // Avoid the header
 
-    while (is) {
+    while (is.good()) {
         lus.lus.push_back(LandUnit());
+        is >> lus.lus.back();
 
-        if (!(is >> lus.lus.back()))    // Try to read, if it fails
-            lus.lus.pop_back();         // remove the data.
+        if (is.eof() or is.fail()) {
+            lus.lus.pop_back();
+            is.clear(is.eofbit);
+        }
     }
 
     return is;

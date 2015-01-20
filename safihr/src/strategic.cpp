@@ -39,8 +39,10 @@ std::istream& operator>>(std::istream &is, CropRotation &rotation)
         int id;
         is >> id;
 
-        if (is.eof())
+        if (is.fail() or is.eof()) {
+            is.clear(is.eofbit);
             break;
+        }
 
         auto ret = rotation.crops.insert(
             std::make_pair(id, std::vector <CropType>()));
