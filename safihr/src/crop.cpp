@@ -22,51 +22,63 @@
 
 #include "crop.hpp"
 #include "global.hpp"
-#include <fstream>
 #include <boost/assign.hpp>
+#include <algorithm>
+#include <iterator>
+#include <fstream>
+#include <vle/utils/i18n.hpp>
+#include <vle/utils/DateTime.hpp>
 
 namespace safihr {
 
+double Crop::get_begin(long year) const
+{
+    std::string date = (vle::fmt("%1%-%2%") % year % begin).str();
+
+    return vle::utils::DateTime::toJulianDay(date);
+}
+
 std::istream& operator>>(std::istream &is, Crop &crop)
 {
-    if (is) {
-        std::string tmp;
-
-        is >> tmp >> crop.surf_min >> crop.surf_max >> crop.dr >> crop.repete_min
-            >> crop.repete_max;
-
-        if (!is)
-            goto failure;
-
-        crop.crop_id = string_to_crop(tmp);
-
-        for (int i = 0; i < 7; ++i) {
-            is >> tmp;
-
-            if (!is)
-                goto failure;
-
-            crop.prec[i] = (tmp == "oui");
-        }
-
-        if (is)
-            return is;
-    }
-
-failure:
-    is.setstate(std::ios::failbit);
-
-    return is;
+    return is >> crop.name >> crop.begin >> crop.duration;
 }
 
 std::istream& operator>>(std::istream& is, Crops &crops)
 {
-    while (is) {
+    std::string line;
+    std::getline(is, line);
+
+    crops.crops.clear();
+    crops.crops.reserve(8u);
+
+    while (is.good()) {
         crops.crops.push_back(Crop());
         is >> crops.crops.back();
+
+        if (is.fail() or is.eof()) {
+            crops.crops.pop_back();
+            is.clear(is.eofbit);
+        }
     }
 
     return is;
+}
+
+std::ostream& operator<<(std::ostream& os, const Crop& crop)
+{
+    return os << crop.name << crop.name << '\t' << crop.begin
+              << '\t' << crop.duration;
+}
+
+std::ostream& operator<<(std::ostream& os, const Crops& crops)
+{
+    os << "CropId\tDate (y-m-d)\tDuration (day)\n";
+
+    std::copy(crops.crops.begin(),
+              crops.crops.end(),
+              std::ostream_iterator <Crop>(os, "\n"));
+
+    return os;
 }
 
 }

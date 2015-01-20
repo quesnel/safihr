@@ -24,33 +24,35 @@
 #define SAFIHR_CROP_HPP
 
 #include <istream>
+#include <ostream>
 #include <string>
-#include <deque>
-#include <boost/array.hpp>
+#include <vector>
 
 namespace safihr {
 
 struct Crop
 {
-    int crop_id;
-    int surf_min;
-    int surf_max;
-    int dr;
-    int repete_min;
-    int repete_max;
-    boost::array <bool, 7> prec;
+    std::string name;
+    std::string begin;
+    int duration;
+
+    double get_begin(long year) const;
 };
 
 struct Crops
 {
-    typedef std::deque <Crop>::iterator iterator;
-    typedef std::deque <Crop>::const_iterator const_iterator;
+    typedef std::vector <Crop> container_value;
+    typedef container_value::iterator iterator;
+    typedef container_value::const_iterator const_iterator;
+    typedef container_value::size_type size_type;
 
-    std::deque <Crop> crops;
+    container_value crops;
 };
 
 std::istream& operator>>(std::istream &is, Crop &crop);
 std::istream& operator>>(std::istream &is, Crops &crops);
+std::ostream& operator<<(std::ostream &os, const Crop &crop);
+std::ostream& operator<<(std::ostream &os, const Crops &crops);
 
 }
 
