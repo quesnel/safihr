@@ -32,11 +32,12 @@ namespace safihr {
 
 struct Crop
 {
-    std::string name;
+    std::string id;                     // e.g. F for flax
+    std::string name;                   // "flax"
     std::string begin;
     int duration;
 
-    double get_begin(long year) const;
+    double get_begin(double time) const;
 };
 
 struct Crops
@@ -45,6 +46,8 @@ struct Crops
     typedef container_value::iterator iterator;
     typedef container_value::const_iterator const_iterator;
     typedef container_value::size_type size_type;
+
+    const Crop& get(const std::string& id) const;
 
     container_value crops;
 };

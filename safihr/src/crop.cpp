@@ -28,20 +28,57 @@
 #include <fstream>
 #include <vle/utils/i18n.hpp>
 #include <vle/utils/DateTime.hpp>
+#include <vle/utils/Exception.hpp>
 
 namespace safihr {
 
-double Crop::get_begin(long year) const
+double Crop::get_begin(double time) const
 {
+    unsigned int year = vle::utils::DateTime::year(time);
+
     std::string date = (vle::fmt("%1%-%2%") % year % begin).str();
 
-    return vle::utils::DateTime::toJulianDay(date);
+    return vle::utils::DateTime::toJulianDayNumber(date);
+}
+
+struct CropFind
+{
+    bool operator()(const Crop& a, const std::string& b) const
+    {
+        return a.id < b;
+    }
+
+    bool operator()(const std::string& a, const Crop& b) const
+    {
+        return a < b.id;
+    }
+};
+
+const Crop& Crops::get(const std::string& id) const
+{
+    const_iterator it = std::lower_bound(crops.begin(), crops.end(),
+                                         id,
+                                         CropFind());
+
+    if (it == crops.end() or it->id != id)
+        throw vle::utils::ModellingError(
+            vle::fmt("fails to find crop id %1%") % id);
+
+    return *it;
 }
 
 std::istream& operator>>(std::istream &is, Crop &crop)
 {
-    return is >> crop.name >> crop.begin >> crop.duration;
+    return is >> crop.id >> crop.name >> crop.begin >> crop.duration;
 }
+
+struct CropCompare
+{
+    bool operator()(const Crop& a, const Crop& b) const
+    {
+        return a.id < b.id;
+    }
+};
 
 std::istream& operator>>(std::istream& is, Crops &crops)
 {
@@ -60,6 +97,9 @@ std::istream& operator>>(std::istream& is, Crops &crops)
             is.clear(is.eofbit);
         }
     }
+
+    std::sort(crops.crops.begin(), crops.crops.end(),
+              CropCompare());
 
     return is;
 }
