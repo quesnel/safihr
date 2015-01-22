@@ -147,18 +147,19 @@ class Farmer : public vle::devs::Executive,
                     (vle::fmt("p%1%") % it->first).str(),
                     crop_soil_state(0.0, false)));
 
-            std::string filename = pack.getDataFile("ITK-BS.txt");
-            std::ifstream ifs(filename.c_str());
+            std::string filename = (vle::fmt("ITK-%1%.txt") % it->second[0]).str();
+            std::string filepath = pack.getDataFile(filename);
+            std::ifstream ifs(filepath.c_str());
             if (not ifs.is_open())
                 throw vle::utils::ModellingError(
-                    vle::fmt("farmer: fail to open %1%") % filename);
+                    vle::fmt("farmer: fail to open %1%") % filepath);
 
             try {
                 plan().fill(ifs, time, (vle::fmt("_p%1%") % (it->first)).str());
             } catch (const std::exception& e) {
                 throw vle::utils::ModellingError(
                     vle::fmt("farmer: fail to read %1% (plot: %2%): %3%") %
-                    filename % i % e.what());
+                    filepath % i % e.what());
             }
 
             DTraceModel(vle::fmt("agent assign crop: %1% to plot: %2%") %
@@ -256,7 +257,8 @@ public:
                 const Farmer::ActivityList& lst = latestStartedActivities();
                 Farmer::ActivityList::const_iterator it = lst.begin();
                 for (; it != lst.end(); ++it) {
-                    std::cout << "farmer output " << (*it)->first << std::endl;
+                    std::cout << std::fixed << m_time
+                              << " farmer output " << (*it)->first << std::endl;
                     (*it)->second.output((*it)->first, output);
                 }
             }
@@ -594,7 +596,7 @@ void Farmer::register_predicates()
         P("penetrability", &Farmer::is_penetrability_plot_valid),
         P("rain", &Farmer::is_rain_quantity_valid),
         P("sum_rain", &Farmer::is_rain_quantity_sum_valid),
-        P("d_petp", &Farmer::is_petp_quantity_sum_valid),
+        P("sum_R-PET", &Farmer::is_petp_quantity_sum_valid),
         P("etp", &Farmer::is_etp_quantity_valid);
 }
 

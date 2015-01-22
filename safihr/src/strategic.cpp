@@ -45,14 +45,14 @@ std::istream& operator>>(std::istream &is, CropRotation &rotation)
         }
 
         auto ret = rotation.crops.insert(
-            std::make_pair(id, std::vector <CropType>()));
+            std::make_pair(id, std::vector <std::string>()));
         if (!ret.second)
             throw std::runtime_error("same land unit define multiple times");
 
         ret.first->second.reserve(rotation.years.size());
         while (is.good() && is.peek() != '\n') {
             is >> tmp;
-            ret.first->second.emplace_back(string_to_crop(tmp));
+            ret.first->second.emplace_back(tmp);
         }
 
         // Here, we check the validity of data. Each crops must have the
@@ -76,7 +76,7 @@ std::ostream& operator<<(std::ostream &os, const CropRotation &rotation)
         os << '\n' << crops.first;
 
         for (const auto& crop : crops.second)
-            os << "\t" << crop_to_string(crop);
+            os << "\t" << crop;
     }
 
     return os;

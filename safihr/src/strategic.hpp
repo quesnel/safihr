@@ -33,12 +33,12 @@ namespace safihr {
 
 struct CropRotation
 {
-    typedef std::map <int, std::vector <CropType>> crop_rotation_type;
+    typedef std::map <int, std::vector <std::string>> crop_rotation_type;
     typedef crop_rotation_type::const_iterator const_iterator;
     typedef crop_rotation_type::iterator iterator;
 
     std::vector <int> years;
-    std::map <int, std::vector <CropType>> crops;
+    crop_rotation_type crops;
 };
 
 std::istream& operator>>(std::istream &is, CropRotation &rotation);
