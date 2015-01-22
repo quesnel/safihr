@@ -6,7 +6,7 @@ predicates { #Predicates list
 	predicate {
 		id = "FieldPenetrability_sup_38";
 		type = "penetrability";
-		parameter {	
+		parameter {
 		penetrability_operator = ">=";
       		penetrability_threshold = 38.0;
 		}
@@ -15,16 +15,16 @@ predicates { #Predicates list
 	predicate {
 		id = "FieldPenetrability_inf_38";
 		type = "penetrability";
-		parameter {	
+		parameter {
 		penetrability_operator = "<";
      	   	penetrability_threshold = 38.0;
 		}
 	}
-	
+
 	predicate {
 		id = "FieldPenetrability_inf_37";
 		type = "penetrability";
-		parameter {	
+		parameter {
 		penetrability_operator = "<";
      	  	 penetrability_threshold = 37.0;
 		}
@@ -33,7 +33,7 @@ predicates { #Predicates list
 	predicate {
 		id = "rain_5";
 		type = "rain";
-		parameter {	
+		parameter {
 		rain_operator = "<=";
 		rain_threshold = 5.0;
 		}
@@ -42,7 +42,7 @@ predicates { #Predicates list
 	predicate {
 		id = "rain_2";
 		type = "rain";
-		parameter {	
+		parameter {
 		rain_operator = "<=";
 		rain_threshold = 2.0;
 		}
@@ -51,8 +51,8 @@ predicates { #Predicates list
 	predicate {
 		id = "2d_rain_10";
 		type = "sum_rain";
-		parameter {	
-		sum_rain_operator = "<=";	
+		parameter {
+		sum_rain_operator = "<=";
 		sum_rain_number = 2.0;
         	sum_rain_threshold = 10;
 		}
@@ -61,8 +61,8 @@ predicates { #Predicates list
 	predicate {
 		id = "2d_rain_1";
 		type = "sum_rain";
-		parameter {	
-		sum_rain_operator = "<=";	
+		parameter {
+		sum_rain_operator = "<=";
 		sum_rain_number = 2.0;
         	sum_rain_threshold = 1.0;
 		}
@@ -71,8 +71,8 @@ predicates { #Predicates list
 	predicate {
 		id = "2d_rain_3";
 		type = "sum_rain";
-		parameter {	
-		sum_rain_operator = "<=";	
+		parameter {
+		sum_rain_operator = "<=";
 		sum_rain_number = 2.0;
         	sum_rain_threshold = 3.0;
 		}
@@ -81,8 +81,8 @@ predicates { #Predicates list
 	predicate {
 		id = "4d_rain_7";
 		type = "sum_rain";
-		parameter {	
-		sum_rain_operator = "<=";	
+		parameter {
+		sum_rain_operator = "<=";
 		sum_rain_number = 4.0;
         	sum_rain_threshold = 7.0;
 		}
@@ -91,8 +91,8 @@ predicates { #Predicates list
 	predicate {
 		id = "4d_rain_5";
 		type = "sum_rain";
-		parameter {	
-		sum_rain_operator = "<=";	
+		parameter {
+		sum_rain_operator = "<=";
 		sum_rain_number = 4.0;
         	sum_rain_threshold = 5.0;
 		}
@@ -100,10 +100,10 @@ predicates { #Predicates list
 
 	predicate {
 		id = "PET_sup_1-5";
-		type = "ETP";
-		parameter {	
-		ETP_operator = "<=";
-		ETP_threshold = 1.5;
+		type = "etp";
+		parameter {
+		etp_operator = "<=";
+		etp_threshold = 1.5;
 		}
 	}
 }
@@ -145,9 +145,9 @@ rules { # Rules list
 
 ## Activities
 activities { # Activites list
-    
+
     activity {
-        id = "Harvest_F;
+        id = "Harvest_F";
      temporal {
                 minstart = "+1-7-10";
 		maxstart = "+1-7-31";	#Actual first possible day of sowing is randomely chosen between minstart and maxstart
@@ -155,31 +155,32 @@ activities { # Activites list
         rules = "Harvest_F";
         ressources = 0;
 	speed_ha_per_day = 10;
+	output = "out";
     }
 
   activity {
-        id = "Stripping_F";   
+        id = "Stripping_F";
         rules = "Stripping_F";
         ressources = 1;
 	speed_ha_per_day = 10;
     }
 
  activity {
-        id = "turning_F";   
+        id = "turning_F";
         rules = "turning_F";
         ressources = 1;
 	speed_ha_per_day = 10;
     }
 
  activity {
-        id = "pressing_F";   
+        id = "pressing_F";
         rules = "pressing_F";
         ressources = 2;
 	speed_ha_per_day = 6;
     }
 
     activity {
-        id = "StublePlow_1_F;
+        id = "StublePlow_1_F";
         temporal {
                 maxfinish = "+0-11-30";
         }
@@ -189,7 +190,7 @@ activities { # Activites list
     }
 
 activity {
-        id = "StublePlow_2_F;
+        id = "StublePlow_2_F";
          temporal {
                 maxfinish = "+0-11-30";
         }
@@ -199,7 +200,7 @@ activity {
     }
 
 activity {
-        id = "StublePlow_3_F;
+        id = "StublePlow_3_F";
         temporal {
                 maxfinish = "+0-11-30";
         }
@@ -214,38 +215,38 @@ activity {
 precedences {
      precedence {
         type = FS;
-        first = "Harvest_F;
-        second = "Stripping_F;
+        first = "Harvest_F";
+        second = "Stripping_F";
 	mintimelag = 10;
     }
   precedence {
         type = FS;
-        first = "Stripping_F;
-        second = "turning_F;
+        first = "Stripping_F";
+        second = "turning_F";
 	mintimelag = 10;
     }
  precedence {
         type = FS;
-        first = "turning_F;
-        second = "pressing_F;
+        first = "turning_F";
+        second = "pressing_F";
 	mintimelag = 10;
     }
 
-precedence {
-        type = FS; 
-        first = "??"; ## last activities of the preceding crop
-        second = "StublePlow_1_F; 
-    }
-    precedence {
+    # precedence {
+    #     type = FS;
+    #     first = "??"; ## last activities of the preceding crop
+    #     second = "StublePlow_1_F";
+    # }
+     precedence {
         type = FS;
-        first = "StublePlow_1_F;
-        second = "StublePlow_2_F;
+        first = "StublePlow_1_F";
+        second = "StublePlow_2_F";
 	mintimelag = 15;
     }
  precedence {
         type = FS;
-        first = "StublePlow_2_F;
-        second = "StublePlow_3_F;
+        first = "StublePlow_2_F";
+        second = "StublePlow_3_F";
 	mintimelag = 15;
     }
-}    
+}

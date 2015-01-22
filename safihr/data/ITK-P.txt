@@ -6,7 +6,7 @@ predicates { #Predicates list
 	predicate {
 		id = "FieldPenetrability_sup_38";
 		type = "penetrability";
-		parameter {	
+		parameter {
 		penetrability_operator = ">=";
       		penetrability_threshold = 38.0;
 		}
@@ -15,17 +15,17 @@ predicates { #Predicates list
 	predicate {
 		id = "FieldPenetrability_inf_38";
 		type = "penetrability";
-		parameter {	
+		parameter {
 		penetrability_operator = "<";
      	   	penetrability_threshold = 38.0;
 		}
 	}
-	
+
 	predicate {
 		id = "rain_5";
 		type = "rain";
 		parameter {
-		rain_operator = "<=";	
+		rain_operator = "<=";
 		rain_threshold = 5.0;
 		}
 	}
@@ -33,7 +33,7 @@ predicates { #Predicates list
 	predicate {
 		id = "rain_2";
 		type = "rain";
-		parameter {	
+		parameter {
 		rain_operator = "<=";
 		rain_threshold = 2.0;
 		}
@@ -42,8 +42,8 @@ predicates { #Predicates list
 	predicate {
 		id = "2d_rain_10";
 		type = "sum_rain";
-		parameter {	
-		sum_rain_operator = "<=";	
+		parameter {
+		sum_rain_operator = "<=";
 		sum_rain_number = 2.0;
         	sum_rain_threshold = 10;
 		}
@@ -71,7 +71,7 @@ rules { # Rules list
 
 ## Activities
 activities { # Activities list
-    
+
     activity {
         id = "Harvest_P";
         temporal {
@@ -117,11 +117,11 @@ activities { # Activities list
 
 ## Precedences
 precedences {
-    precedence {
-        type = FS; 
-        first = "??"; ##  last activities of the preceding crop
-        second = "StublePlow_1_P"; 
-    }
+    # precedence {
+    #     type = FS;
+    #     first = "??"; ##  last activities of the preceding crop
+    #     second = "StublePlow_1_P";
+    # }
     precedence {
         type = FS;
         first = "StublePlow_1_P";
@@ -134,15 +134,4 @@ precedences {
         second = "StublePlow_3_P";
 	mintimelag = 15;
     }
-}    
-
-
-
-
-
-
-
-
-
-
-
+}
