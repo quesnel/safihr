@@ -39,6 +39,51 @@
 
 namespace safihr {
 
+struct CropSoilState
+{
+    CropSoilState()
+        : ru(0.0)
+        , harvestable(false)
+    {}
+
+    double ru;
+    bool harvestable;
+};
+
+struct CropSoilStateList
+{
+    void insert(const std::string& name)
+    {
+        lst.emplace(name, CropSoilState());
+    }
+
+    const CropSoilState& get(const std::string& plot) const
+    {
+        const_iterator it = lst.find(plot);
+        if (it == lst.end())
+            throw vle::utils::ModellingError(
+                vle::fmt("crop soil state: unknown plot %1%") % plot);
+
+        return it->second;
+    }
+
+    CropSoilState& get(const std::string& plot)
+    {
+        iterator it = lst.find(plot);
+        if (it == lst.end())
+            throw vle::utils::ModellingError(
+                vle::fmt("crop soil state: unknown plot %1%") % plot);
+
+        return it->second;
+    }
+
+    typedef std::map <std::string, CropSoilState> container_type;
+    typedef container_type::const_iterator const_iterator;
+    typedef container_type::iterator iterator;
+
+    container_type lst;
+};
+
 class Farmer : public vle::devs::Executive,
                public vle::extension::decision::KnowledgeBase
 {
@@ -106,7 +151,6 @@ class Farmer : public vle::devs::Executive,
                       const vle::extension::decision::Activity& activity,
                       vle::devs::ExternalEventList& lst);
 
-
     void register_facts();
     template <typename Container>
     void prediction_update(Container &con);
@@ -116,8 +160,6 @@ class Farmer : public vle::devs::Executive,
     void harvestable_fact(const std::string& port, const vle::value::Value& value);
 
     void register_predicates();
-    std::string get_landunit_from_activity_name(const std::string& activity);
-    double get_ru_from_activity_name(const std::string& activity);
     double get_sum_rain(int day_number) const;
     double get_sum_petp(int day_number) const;
 
@@ -142,10 +184,7 @@ class Farmer : public vle::devs::Executive,
         int i = 0;
         for (CropRotation::const_iterator it = m_rotation.crops.begin();
              it != m_rotation.crops.end(); ++it) {
-            m_crop_soil_state.insert(
-                std::make_pair <std::string, crop_soil_state>(
-                    (vle::fmt("p%1%") % it->first).str(),
-                    crop_soil_state(0.0, false)));
+            m_crop_soil_state.insert((vle::fmt("p%1%") % it->first).str());
 
             std::string filename = (vle::fmt("ITK-%1%.txt") % it->second[0]).str();
             std::string filepath = pack.getDataFile(filename);
@@ -393,19 +432,7 @@ private:
     vle::utils::Rand m_rand;
     State mState;
 
-    struct crop_soil_state
-    {
-        crop_soil_state(double _ru, bool _harvestable)
-            : ru(_ru)
-            , harvestable(_harvestable)
-        {}
-
-        double ru;
-        bool harvestable;
-    };
-
-    typedef std::map <std::string, crop_soil_state> crop_soil_state_list;
-    crop_soil_state_list m_crop_soil_state;
+    CropSoilStateList m_crop_soil_state;
 
     std::deque <double> m_rain;
     std::deque <double> m_etp;
@@ -561,28 +588,18 @@ void Farmer::etp_fact(const vle::value::Value& value)
 
 void Farmer::ru_fact(const std::string& port, const vle::value::Value& value)
 {
-    crop_soil_state_list::iterator it = m_crop_soil_state.find(port);
-    if (it == m_crop_soil_state.end())
-        throw std:: invalid_argument(
-            (vle::fmt("unknown landunit %1%") % port).str());
+    m_crop_soil_state.get(port).ru = vle::value::toMapValue(value).getDouble("ru");
 
-    it->second.ru = vle::value::toMapValue(value).getDouble("ru");
-
-    TraceModel(vle::fmt("ru_fact for %1%=%2%") % it->first % it->second.ru);
+    DTraceModel(vle::fmt("ru_fact for %1%=%2%") % port % m_crop_soil_state.get(port).ru);
 }
 
 void Farmer::harvestable_fact(const std::string& port, const vle::value::Value& value)
 {
     (void)value;
 
-    crop_soil_state_list::iterator it = m_crop_soil_state.find(port);
-    if (it == m_crop_soil_state.end())
-        throw std:: invalid_argument(
-            (vle::fmt("unknown landunit %1%") % port).str());
+    m_crop_soil_state.get(port).harvestable = true;
 
-    it->second.harvestable = true;
-
-    TraceModel(vle::fmt("harvestable_fact for %1%=%2%") % it->first % true);
+    DTraceModel(vle::fmt("harvestable_fact for %1%=%2%") % port % true);
 }
 
 //
@@ -600,40 +617,17 @@ void Farmer::register_predicates()
         P("etp", &Farmer::is_etp_quantity_valid);
 }
 
-std::string Farmer::get_landunit_from_activity_name(const std::string& activity)
-{
-    std::string::size_type pos = activity.find_last_of("_");
-    if (pos == std::string::npos)
-        throw vle::utils::ModellingError(
-            vle::fmt("farmer: unknown activity %1%") % activity);
-
-    return activity.substr(pos + 1, std::string::npos);
-}
-
-double Farmer::get_ru_from_activity_name(const std::string& activity)
-{
-    std::string landunit = get_landunit_from_activity_name(activity);
-
-    crop_soil_state_list::const_iterator it = m_crop_soil_state.find(landunit);
-    if (it == m_crop_soil_state.end())
-        throw vle::utils::ModellingError(
-            vle::fmt("farmer: unknown landunit %1%") % landunit);
-
-    return it->second.ru;
-}
-
 bool Farmer::is_harvestable(const std::string& activity,
                             const std::string& rule,
                             const vle::extension::decision::PredicateParameters& param)
 {
-    (void)activity;
     (void)rule;
     (void)param;
 
-    /* TODO: need to split activity to take the plot identifier and test
-       the crop state. */
+    std::string plot;
+    split_activity_name(activity, NULL, NULL, &plot, NULL);
 
-    return false;
+    return m_crop_soil_state.get(plot).harvestable;
 }
 
 bool Farmer::is_penetrability_plot_valid(const std::string& activity,
@@ -645,14 +639,17 @@ bool Farmer::is_penetrability_plot_valid(const std::string& activity,
     std::string op = param.getString("penetrability_operator");
     double value = param.getDouble("penetrability_threshold");
 
+    std::string plot;
+    split_activity_name(activity, NULL, NULL, &plot, NULL);
+
     if (op == "<")
-        return get_ru_from_activity_name(activity) < value;
+        return m_crop_soil_state.get(plot).ru < value;
 
     if (op == ">=")
-        return get_ru_from_activity_name(activity) >= value;
+        return m_crop_soil_state.get(plot).ru >= value;
 
     if (op == "=")
-        return is_almost_equal(get_ru_from_activity_name(activity), value);
+        return is_almost_equal(m_crop_soil_state.get(plot).ru, value);
 
     throw vle::utils::ModellingError(
         vle::fmt("farmer predicate penetrability: unknown operator %1%") % op);
