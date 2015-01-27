@@ -114,7 +114,7 @@ rules { # Rules list
 
     rule {
         id = "Harvest_F";
-        predicates = "FieldPenetrability_inf_37", "2d_rain_3";
+        predicates = "FieldPenetrability_inf_37", "2d_rain_3", "harvestable";
     }
 
     rule {
@@ -147,11 +147,20 @@ rules { # Rules list
 activities { # Activites list
 
     activity {
-        id = "Harvest_F";
-     temporal {
-                minstart = "+1-7-10";
-		maxstart = "+1-7-31";	#Actual first possible day of sowing is randomely chosen between minstart and maxstart
+        id = "StublePlowSeeding_F";
+        temporal {
+            minstart = "+0-1-1";
+            maxstart = "+0-1-31";
         }
+        output = "out";
+    }
+
+    activity {
+        id = "Harvest_F";
+     # temporal {
+     #            minstart = "+1-7-10";
+     # 		maxstart = "+1-7-31";
+     #    }
         rules = "Harvest_F";
         ressources = 0;
 	speed_ha_per_day = 10;
@@ -163,6 +172,7 @@ activities { # Activites list
         rules = "Stripping_F";
         ressources = 1;
 	speed_ha_per_day = 10;
+	output = "out";
     }
 
  activity {
@@ -170,6 +180,7 @@ activities { # Activites list
         rules = "turning_F";
         ressources = 1;
 	speed_ha_per_day = 10;
+	output = "out";
     }
 
  activity {
@@ -177,6 +188,7 @@ activities { # Activites list
         rules = "pressing_F";
         ressources = 2;
 	speed_ha_per_day = 6;
+	output = "out";
     }
 
     activity {
@@ -187,6 +199,7 @@ activities { # Activites list
         rules = "StublePlow_sub_optimal", "StublePlow_optimal";
         ressources = 1;
 	speed_ha_per_day = 20;
+	output = "out";
     }
 
 activity {
@@ -197,6 +210,7 @@ activity {
         rules = "StublePlow_sub_optimal", "StublePlow_optimal";
         ressources = 1;
 	speed_ha_per_day = 20;
+	output = "out";
     }
 
 activity {
@@ -207,6 +221,7 @@ activity {
         rules = "StublePlow_sub_optimal", "StublePlow_optimal";
         ressources = 1;
 	speed_ha_per_day = 20;
+	output = "out";
     }
 
 }
@@ -232,11 +247,11 @@ precedences {
 	mintimelag = 10;
     }
 
-    # precedence {
-    #     type = FS;
-    #     first = "??"; ## last activities of the preceding crop
-    #     second = "StublePlow_1_F";
-    # }
+     precedence {
+         type = FS;
+         first = "StublePlowSeeding_F"; ## last activities of the preceding crop
+         second = "StublePlow_1_F";
+     }
      precedence {
         type = FS;
         first = "StublePlow_1_F";

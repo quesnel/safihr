@@ -35,7 +35,7 @@ predicates { #Predicates list
 		type = "penetrability";
 		parameter {
 		penetrability_operator = "=";
-     	   	penetrability_threshold = 40.0;
+     	   	penetrability_threshold = 40;
 		}
 	}
 
@@ -114,12 +114,14 @@ rules { # rules list
 
     rule {
         id = "Herbicide";
-        predicates = "FieldPenetrability_40", "rain_2";
+        predicates = "FieldPenetrability_40";
+#        predicates = "FieldPenetrability_40", "rain_2";
+#        predicates = "rain_2";
     }
 
     rule {
         id = "Harvest";
-        predicates = "rain_2", "2d_rain_10";
+        predicates = "rain_2", "2d_rain_10", "harvestable";
     }
 
     rule {
@@ -148,6 +150,8 @@ activities { # Activites list
         rules = "Sowing_sub_optimal", "Sowing_optimal";
 	ressources = 2;
 	speed_ha_per_day = 10;
+		output = "out";
+
     }
 
     activity {
@@ -158,6 +162,7 @@ activities { # Activites list
         rules = "Herbicide";
 	ressources = 1;
 	speed_ha_per_day = 30;
+	output = "out";
     }
 
     activity {
@@ -168,17 +173,19 @@ activities { # Activites list
         rules = "Herbicide";
 	ressources = 1;
 	speed_ha_per_day = 30;
+	output = "out";
     }
 
     activity {
         id = "Harvest_W";
-        temporal {
-                minstart = "+1-7-15";
-		maxstart = "+1-7-31";	#Actual first possible day of sowing is randomely chosen between minstart and maxstart
-        }
+        # temporal {
+        #         minstart = "+1-7-15";
+	# 	maxstart = "+1-7-31";	#Actual first possible day of sowing is randomely chosen between minstart and maxstart
+        # }
         rules = "Harvest";
         ressources = 2;
 	speed_ha_per_day = 15;
+	output = "out";
     }
 
     activity {
@@ -186,6 +193,7 @@ activities { # Activites list
         rules = "Pressing";
 	ressources = 2;
 	speed_ha_per_day = 15;
+	output = "out";
     }
 
     activity {
@@ -196,6 +204,7 @@ activities { # Activites list
         rules = "StublePlow_sub_optimal", "StublePlow_optimal";
         ressources = 1;
 	speed_ha_per_day = 20;
+	output = "out";
     }
 
 	activity {
@@ -206,6 +215,7 @@ activities { # Activites list
         rules = "StublePlow_sub_optimal", "StublePlow_optimal";
         ressources = 1;
 	speed_ha_per_day = 20;
+	output = "out";
     }
 
 	activity {
@@ -216,6 +226,7 @@ activities { # Activites list
         rules = "StublePlow_sub_optimal", "StublePlow_optimal";
         ressources = 1;
 	speed_ha_per_day = 20;
+		output = "out";
     }
 
 }

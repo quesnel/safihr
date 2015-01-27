@@ -6,7 +6,7 @@ predicates { #Predicates list
 	predicate {
 		id = "FieldPenetrability_sup_38";
 		type = "penetrability";
-		parameter {	
+		parameter {
 		penetrability_operator = ">=";
       		penetrability_threshold = 38.0;
 		}
@@ -15,7 +15,7 @@ predicates { #Predicates list
 	predicate {
 		id = "FieldPenetrability_inf_38";
 		type = "penetrability";
-		parameter {	
+		parameter {
 		penetrability_operator = "<";
      	   	penetrability_threshold = 38.0;
 		}
@@ -24,16 +24,16 @@ predicates { #Predicates list
 	predicate {
 		id = "FieldPenetrability_inf_40";
 		type = "penetrability";
-		parameter {	
+		parameter {
 		penetrability_operator = "<";
      	   	penetrability_threshold = 40.0;
 		}
 	}
-	
+
 	predicate {
 		id = "FieldPenetrability_40";
 		type = "penetrability";
-		parameter {	
+		parameter {
 		penetrability_operator = "=";
      	   	penetrability_threshold = 40.0;
 		}
@@ -42,7 +42,7 @@ predicates { #Predicates list
 	predicate {
 		id = "rain_5";
 		type = "rain";
-		parameter {	
+		parameter {
 		rain_operator = "<=";
 		rain_threshold = 5.0;
 		}
@@ -51,7 +51,7 @@ predicates { #Predicates list
 	predicate {
 		id = "rain_2";
 		type = "rain";
-		parameter {	
+		parameter {
 		rain_operator = "<=";
 		rain_threshold = 2.0;
 		}
@@ -60,8 +60,8 @@ predicates { #Predicates list
 	predicate {
 		id = "2d_rain_10";
 		type = "sum_rain";
-		parameter {	
-		sum_rain_operator = "<=";	
+		parameter {
+		sum_rain_operator = "<=";
 		sum_rain_number = 2.0;
         	sum_rain_threshold = 10;
 		}
@@ -70,8 +70,8 @@ predicates { #Predicates list
 	predicate {
 		id = "2d_rain_8";
 		type = "sum_rain";
-		parameter {	
-		sum_rain_operator = "<=";	
+		parameter {
+		sum_rain_operator = "<=";
 		sum_rain_number = 2.0;
         	sum_rain_threshold = 8.0;
 		}
@@ -80,8 +80,8 @@ predicates { #Predicates list
 	predicate {
 		id = "3d_rain_20";
 		type = "sum_rain";
-		parameter {	
-		sum_rain_operator = "<=";	
+		parameter {
+		sum_rain_operator = "<=";
 		sum_rain_number = 3.0;
         	sum_rain_threshold = 20.0;
 		}
@@ -90,8 +90,8 @@ predicates { #Predicates list
 	predicate {
 		id = "2d_R-PET_inf_0";
 		type = "sum_R-PET";
-		parameter {	
-		sum_R-PET_operator = "<=";	
+		parameter {
+		sum_R-PET_operator = "<=";
 		sum_R-PET_number = 2.0;
         	sum_R-PET_threshold = 0.0;
 		}
@@ -119,7 +119,7 @@ rules { # rules list
 
     rule {
         id = "Harvest";
-        predicates = "rain_2", "2d_rain_10";
+        predicates = "rain_2", "2d_rain_10", "harvestable";
     }
 
     rule {
@@ -148,6 +148,7 @@ activities { # Activites list
         rules = "Sowing_sub_optimal", "Sowing_optimal";
 	ressources = 2;
 	speed_ha_per_day = 10;
+	output = "out";
     }
 
     activity {
@@ -158,6 +159,8 @@ activities { # Activites list
         rules = "Herbicide";
 	ressources = 1;
 	speed_ha_per_day = 30;
+		output = "out";
+
     }
 
     activity {
@@ -168,17 +171,21 @@ activities { # Activites list
         rules = "Herbicide";
 	ressources = 1;
 	speed_ha_per_day = 30;
+		output = "out";
+
     }
 
     activity {
         id = "Harvest_WB";
         temporal {
-                minstart = "+1-7-1";
-		maxstart = "+1-7-15";	#Actual first possible day of sowing is randomely chosen between minstart and maxstart
-        }
+        #         minstart = "+1-7-1";
+	# 	maxstart = "+1-7-15";	#Actual first possible day of sowing is randomely chosen between minstart and maxstart
+        # }
         rules = "Harvest";
         ressources = 2;
 	speed_ha_per_day = 15;
+		output = "out";
+
     }
 
     activity {
@@ -186,6 +193,8 @@ activities { # Activites list
         rules = "Pressing";
 	ressources = 2;
 	speed_ha_per_day = 15;
+		output = "out";
+
     }
 
     activity {
@@ -196,6 +205,8 @@ activities { # Activites list
         rules = "StublePlow_sub_optimal", "StublePlow_optimal";
         ressources = 1;
 	speed_ha_per_day = 20;
+		output = "out";
+
     }
 
 activity {
@@ -206,6 +217,8 @@ activity {
         rules = "StublePlow_sub_optimal", "StublePlow_optimal";
         ressources = 1;
 	speed_ha_per_day = 20;
+		output = "out";
+
     }
 
 activity {
@@ -216,17 +229,19 @@ activity {
         rules = "StublePlow_sub_optimal", "StublePlow_optimal";
         ressources = 1;
 	speed_ha_per_day = 20;
+		output = "out";
+
     }
 
 }
 
 ## Precedences
 precedences {
-    precedence {
-        type = FS; 
-        first = "??"; ## last activities of the preceding crop
-        second = "StublePlow_1_WB"; 
-    }
+    # precedence {
+    #     type = FS;
+    #     first = "??"; ## last activities of the preceding crop
+    #     second = "StublePlow_1_WB";
+    # }
     precedence {
         type = FS;
         first = "StublePlow_1_WB";
@@ -239,11 +254,11 @@ precedences {
         second = "StublePlow_3_WB";
 	mintimelag = 15;
     }
-    precedence {
-        type = FS;
-        first = "??"; ## last activities of the preceding crop
-        second = "Sowing_WB";
-    }
+    # precedence {
+    #     type = FS;
+    #     first = "??"; ## last activities of the preceding crop
+    #     second = "Sowing_WB";
+    # }
    precedence {
         type = FS;
         first = "Sowing_WB";

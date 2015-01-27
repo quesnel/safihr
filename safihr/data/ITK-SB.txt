@@ -56,12 +56,12 @@ rules { # Rules list
 
     rule {
         id = "Harvest_SB_optimal";
-        predicates = "FieldPenetrability_inf_38", "rain_5";
+        predicates = "FieldPenetrability_inf_38", "rain_5", "harvestable";
     }
 
     rule {
         id = "Harvest_SB_sub_optimal";
-        predicates = "FieldPenetrability_sup_38", "rain_5", "2d_rain_10", "3d_rain_20";
+        predicates = "FieldPenetrability_sup_38", "rain_5", "2d_rain_10", "3d_rain_20", "harvestable";
     }
 
     rule {
@@ -93,10 +93,10 @@ activities { # Activities list
 
     activity {
         id = "Harvest_1_SB";  #1/3 of sugar beet cultivated area
-                                  temporal {
-            minstart = "+1-10-1";
-            maxstart = "+1-10-15";	#Actual first possible day of sowing is randomely chosen between minstart and maxstart
-                                            }
+            #                       temporal {
+            # minstart = "+1-10-1";
+            # maxstart = "+1-10-15";	#Actual first possible day of sowing is randomely chosen between minstart and maxstart
+	    # }
         rules = "Harvest_SB_optimal", "Harvest_SB_sub_optimal";
         ressources = 2;
         speed_ha_per_day = 10;
@@ -108,6 +108,7 @@ activities { # Activities list
                                     rules = "Harvest_SB_optimal", "Harvest_SB_sub_optimal";
         ressources = 2;
         speed_ha_per_day = 10;
+        output = "out";
     }
 
     activity {
@@ -115,6 +116,7 @@ activities { # Activities list
                                   rules = "Harvest_SB_optimal", "Harvest_SB_sub_optimal";
         ressources = 2;
         speed_ha_per_day = 10;
+        output = "out";
     }
 
     activity {

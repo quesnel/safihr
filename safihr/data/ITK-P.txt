@@ -55,7 +55,7 @@ rules { # Rules list
 
     rule {
         id = "Harvest";
-        predicates = "rain_2", "2d_rain_10";
+        predicates = "rain_2", "2d_rain_10", "harvestable";
     }
 
     rule {
@@ -73,14 +73,25 @@ rules { # Rules list
 activities { # Activities list
 
     activity {
-        id = "Harvest_P";
+        id = "Sowing_P";
         temporal {
-                minstart = "+1-7-15";
-		maxstart = "+1-7-31";	#Actual first possible day of sowing is randomely chosen between minstart and maxstart
+            minstart = "+0-1-1";
+            maxstart = "+0-1-31";
         }
+        output = "out";
+    }
+
+    activity {
+        id = "Harvest_P";
+        # temporal {
+        #         minstart = "+1-7-15";
+	# 	maxstart = "+1-7-31";	#Actual first possible day of sowing is randomely chosen between minstart and maxstart
+        # }
         rules = "Harvest";
         ressources = 2;
 	speed_ha_per_day = 15;
+		output = "out";
+
     }
 
     activity {
@@ -91,6 +102,7 @@ activities { # Activities list
         rules = "StublePlow_sub_optimal", "StublePlow_optimal";
         ressources = 1;
 	speed_ha_per_day = 20;
+	output = "out";
     }
 
     activity {
@@ -101,6 +113,7 @@ activities { # Activities list
         rules = "StublePlow_sub_optimal", "StublePlow_optimal";
         ressources = 1;
 	speed_ha_per_day = 20;
+	output = "out";
     }
 
     activity {
@@ -111,17 +124,18 @@ activities { # Activities list
         rules = "StublePlow_sub_optimal", "StublePlow_optimal";
         ressources = 1;
 	speed_ha_per_day = 20;
+	output = "out";
     }
 
 }
 
 ## Precedences
 precedences {
-    # precedence {
-    #     type = FS;
-    #     first = "??"; ##  last activities of the preceding crop
-    #     second = "StublePlow_1_P";
-    # }
+     precedence {
+         type = FS;
+         first = "Sowing_P"; ##  last activities of the preceding crop
+         second = "StublePlow_1_P";
+     }
     precedence {
         type = FS;
         first = "StublePlow_1_P";
