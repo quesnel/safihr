@@ -32,11 +32,9 @@
 
 namespace safihr {
 
-double Crop::get_begin(double time) const
+double Crop::get_begin(unsigned int year) const
 {
-    unsigned int year = vle::utils::DateTime::year(time);
-
-    std::string date = (vle::fmt("%1%-%2%") % year % begin).str();
+    std::string date = (vle::fmt("%1%-%2%-%3%") % year % month % day).str();
 
     return vle::utils::DateTime::toJulianDayNumber(date);
 }
@@ -69,7 +67,14 @@ const Crop& Crops::get(const std::string& id) const
 
 std::istream& operator>>(std::istream &is, Crop &crop)
 {
-    return is >> crop.id >> crop.name >> crop.begin >> crop.duration;
+    std::string type;
+
+    is >> crop.id >> crop.name >> type >> crop.month >> crop.day
+       >> crop.duration;
+
+    crop.is_summer = (type == "summer");
+
+    return is;
 }
 
 struct CropCompare
@@ -106,13 +111,14 @@ std::istream& operator>>(std::istream& is, Crops &crops)
 
 std::ostream& operator<<(std::ostream& os, const Crop& crop)
 {
-    return os << crop.name << crop.name << '\t' << crop.begin
-              << '\t' << crop.duration;
+    return os << crop.name << crop.name << '\t'
+              << ((crop.is_summer) ? "summer" : "winter") << '\t'
+              << crop.month << '\t' << crop.day << '\t' << crop.duration;
 }
 
 std::ostream& operator<<(std::ostream& os, const Crops& crops)
 {
-    os << "CropId\tDate (y-m-d)\tDuration (day)\n";
+    os << "Id\tName\tType\tDate (y-m-d)\tRandom duration (day)\n";
 
     std::copy(crops.crops.begin(),
               crops.crops.end(),

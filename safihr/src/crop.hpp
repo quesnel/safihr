@@ -32,12 +32,28 @@ namespace safihr {
 
 struct Crop
 {
-    std::string id;                     // e.g. F for flax
-    std::string name;                   // "flax"
-    std::string begin;
+    /// id represents the identifier of the current crops. For example @e
+    /// F for @e flax.
+    std::string id;
+
+    /// the @e name of the crop. For example @e flax.
+    std::string name;
+
+    /// the begin date (@e month-day) when crop can change state from @e
+    /// grows to the state @e harvestable.
+    unsigned int month;
+    unsigned int day;
+
+    /// the duration represents limits of the window to change state from
+    /// @e grows to the state @e harvestable.
     int duration;
 
-    double get_begin(double time) const;
+    /// If @e true, crop starts in beginning of the year. If @e is_summer
+    /// is @e false, crop starts during the year and in the same year of
+    /// the previous crop.
+    bool is_summer;
+
+    double get_begin(unsigned int year) const;
 };
 
 struct Crops

@@ -145,7 +145,7 @@ public:
     {
         (void)time;
 
-        if (m_phase == WAIT) {
+        if (m_phase == SEND) {
             vle::devs::ExternalEvent *evt = new vle::devs::ExternalEvent("out");
             evt->putAttribute("ru", new vle::value::Double(m_ru));
             output.push_back(evt);

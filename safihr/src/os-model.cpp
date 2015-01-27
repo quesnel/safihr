@@ -20,16 +20,163 @@
  * SOFTWARE.
  */
 
-#include "global.hpp"
 #include <vle/devs/Dynamics.hpp>
 #include <vle/devs/DynamicsDbg.hpp>
 #include <vle/utils/Trace.hpp>
 #include <algorithm>
-#include <deque>
 #include <stdexcept>
 #include <vector>
+#include "global.hpp"
 
 namespace safihr {
+
+struct message_to_plot
+{
+    struct message
+    {
+        message(const std::string& plot_, const std::string& crop_,
+                const std::string& order_)
+            : plot(plot_), crop(crop_), order(order_)
+        {}
+
+        std::string plot;
+        std::string crop;
+        std::string order;
+    };
+
+    typedef std::vector <message> container_type;
+    typedef container_type::iterator iterator;
+    typedef container_type::const_iterator const_iterator;
+
+    void push_back(const std::string& plot, const std::string& crop,
+                   const std::string& order)
+    {
+        assert(order == "sow" or order == "harvest");
+        assert(plot.size() > 1 and plot[0] == 'p');
+
+        container.push_back(message(plot, crop, order));
+    }
+
+    void send(vle::devs::ExternalEventList &output) const
+    {
+        for (const_iterator it = container.begin(); it != container.end(); ++it) {
+            vle::devs::ExternalEvent *evt = new vle::devs::ExternalEvent(it->plot);
+            evt->putAttribute("order", new vle::value::String(it->order));
+            evt->putAttribute("crop", new vle::value::String(it->crop));
+
+            output.push_back(evt);
+        }
+    }
+
+    void clear() { return container.clear(); }
+    bool empty() const { return container.empty(); }
+
+    container_type container;
+};
+
+std::ostream& operator<<(std::ostream& os, const message_to_plot& msgs)
+{
+    os << "message to plot ";
+    for (size_t i = 0, e = msgs.container.size(); i != e; ++i)
+        os << '(' << msgs.container[i].plot
+           << ',' << msgs.container[i].crop
+           << ',' << msgs.container[i].order << ')';
+
+    return os;
+}
+
+struct message_to_farmer
+{
+    struct message
+    {
+        message(const vle::devs::Time& end_, const vle::devs::Time& eta_,
+                const std::string& port_, const std::string& activity_,
+                const std::string& order_)
+            : end(end_), eta(eta_), port(port_), activity(activity_)
+            , order(order_)
+        {}
+
+        vle::devs::Time end;            // A constant date when message must be send.
+        vle::devs::Time eta;            // A remaining duration before sending message.
+        std::string port;               // From which land unit.
+        std::string activity;           // Activity name from Agent.
+        std::string order;              // Type of order.
+    };
+
+    struct message_compare
+    {
+        bool operator()(const message& a, const message& b) const
+        {
+            return a.eta >= b.eta;
+        }
+    };
+
+    void push_back(const vle::devs::Time &time, const vle::devs::Time &end,
+                   const std::string &activity, const std::string &port,
+                   const std::string &order)
+    {
+        container.push_back(message(end, std::max(end - time, 0.0), port, activity, order));
+        std::push_heap(container.begin(), container.end(), message_compare());
+    }
+
+    void pop(const vle::devs::Time& time)
+    {
+        while (not container.empty() and container.front().end == time) {
+            std::pop_heap(container.begin(), container.end(), message_compare());
+            container.pop_back();
+        }
+    }
+
+    void update(const vle::devs::Time& time)
+    {
+        for (size_t i = 0, e = container.size(); i != e; ++i)
+            container[i].eta = std::max(container[i].end - time, 0.0);
+
+        std::make_heap(container.begin(), container.end(), message_compare());
+    }
+
+    void send(const vle::devs::Time& time, vle::devs::ExternalEventList &output) const
+    {
+        container_type copy(container);
+
+        while (not copy.empty() and copy.front().end == time) {
+            vle::devs::ExternalEvent *evt = new vle::devs::ExternalEvent("out");
+            evt->putAttribute("p", new vle::value::String(copy.front().port));
+            evt->putAttribute("activity", new vle::value::String(copy.front().activity));
+            evt->putAttribute("order", new vle::value::String("done"));
+            output.push_back(evt);
+
+            std::pop_heap(copy.begin(), copy.end(), message_compare());
+            copy.pop_back();
+        }
+    }
+
+    vle::devs::Time top() const { return container.front().eta; }
+    bool empty() const { return container.empty(); }
+
+    typedef std::vector <message> container_type;
+    typedef container_type::iterator iterator;
+    typedef container_type::const_iterator const_iterator;
+
+    container_type container;
+};
+
+std::ostream& operator<<(std::ostream& os, const message_to_farmer& msgs)
+{
+    os << "message to farmer ";
+
+    message_to_farmer::container_type c(msgs.container);
+    while (not c.empty()) {
+        os << '(' << c.front().activity << ',' << c.front().port << ','
+           << c.front().order << ',' << c.front().eta << ','
+           << c.front().end << ')';
+
+        std::pop_heap(c.begin(), c.end(), message_to_farmer::message_compare());
+        c.pop_back();
+    }
+
+    return os;
+}
 
 /**
  * Operating System (OS) receives order from the farmer model. Order are
@@ -39,71 +186,10 @@ namespace safihr {
  */
 class OS : public vle::devs::Dynamics
 {
-    /**
-     * A struct to store when a job finished.
-     */
-    struct record
-    {
-        vle::devs::Time end;            // A constant date when message
-                                        // must be send.
-        vle::devs::Time eta;            // A remaining duration before
-                                        // sending message.
-        std::string port;               // From which land unit.
-        std::string activity;           // Activity name from Agent.
-        std::string order;              // Type of order.
-
-        bool operator<(const record &other) const
-        {
-            return eta < other.eta;
-        }
-    };
-
-    /**
-     * A struct to store message (type: sow or harvest) to land unit (id:
-     * port).
-     */
-    struct message_to_p
-    {
-        enum MessageType { SOW, HARVEST } ;
-
-        std::string port;
-        MessageType msg;
-        double duration;
-    };
-
-    std::vector <message_to_p> m_message_to_p; // Message to land unit are
-                                               // immediatly send.
-
-    std::deque <record> m_queue;        // Sorted deque using C++
-                                        // make_heap.
-    vle::devs::Time m_time;
-
-    void queue_add(const vle::devs::Time &time,
-                   const vle::devs::Time &end,
-                   const std::string &activity,
-                   const std::string &port,
-                   const std::string &order)
-    {
-        m_queue.push_back(record());
-
-        m_queue.back().end = end;
-        m_queue.back().eta = std::max(end - time, 0.0);
-        m_queue.back().activity = activity;
-        m_queue.back().port = port;
-        m_queue.back().order = order;
-
-        std::push_heap(m_queue.begin(), m_queue.end());
-    }
-
-    void update_queue(const vle::devs::Time& time)
-    {
-        for (size_t i = 0, e = m_queue.size(); i != e; ++i)
-            m_queue[i].eta = std::max(m_queue[i].end - time, 0.0);
-
-        // Not necessary since m_queue is already sorted with eta?
-        std::make_heap(m_queue.begin(), m_queue.end());
-    }
-
+    message_to_plot m_message_to_plot; // Message be send immediatly to
+                                       // plot.
+    message_to_farmer m_message_to_farmer; // Message to be send to farmer
+                                           // after the duration of work.
 public:
     OS(const vle::devs::DynamicsInit &init, const vle::devs::InitEventList &evts)
         : vle::devs::Dynamics(init, evts)
@@ -112,69 +198,45 @@ public:
     virtual ~OS()
     {}
 
-    virtual vle::devs::Time init(const vle::devs::Time &time)
-    {
-        m_time = time;
-
-        return timeAdvance();
-    }
-
     virtual vle::devs::Time timeAdvance() const
     {
-        TraceModel(vle::fmt("1: %1% 2: %2%") %
-                   m_message_to_p.size() %
-                   m_queue.size());
-
-        if (not m_message_to_p.empty())
+        if (not m_message_to_plot.empty())
             return 0.0;
 
-        if (m_queue.empty())
-            return vle::devs::infinity;
+        if (not m_message_to_farmer.empty())
+            return m_message_to_farmer.top();
 
-        TraceModel(vle::fmt("OS need to be wake up in %1%") % m_queue.front().eta);
-
-        return m_queue.front().eta;
+        return vle::devs::infinity;
     }
 
     virtual void internalTransition(const vle::devs::Time &time)
     {
-        if (not m_message_to_p.empty())
-            m_message_to_p.clear();
+        m_message_to_plot.clear();
+        m_message_to_farmer.pop(time);
 
-        while (not m_queue.empty() && is_almost_equal(m_queue.front().eta, 0.0)) {
-            std::pop_heap(m_queue.begin(), m_queue.end());
-            m_queue.pop_back();
-        }
-
-        update_queue(time);
+        m_message_to_farmer.update(time);
     }
 
     virtual void externalTransition(const vle::devs::ExternalEventList& evts,
                                     const vle::devs::Time &time)
     {
-        update_queue(time);
+        m_message_to_farmer.update(time);
 
         vle::devs::ExternalEventList::const_iterator it, et;
         for (it = evts.begin(), et = evts.end(); it != et; ++it) {
             if ((*it)->onPort("in")) {
                 std::string activity = (*it)->getAttributes().getString("activity");
                 std::string port = (*it)->getAttributes().getString("p");
+                std::string crop = (*it)->getAttributes().getString("crop");
                 std::string order = (*it)->getAttributes().getString("order");
                 double duration = (*it)->getAttributes().getDouble("duration");
 
-                // TODO activities are all done.
-                queue_add(time, duration + time, activity, port, "done");
+                if (order == "sow" or order == "harvest")
+                    m_message_to_plot.push_back(port, crop, order);
 
-                m_message_to_p.push_back(message_to_p());
-                m_message_to_p.back().port = (*it)->getAttributes().getString("p");
-                m_message_to_p.back().duration = duration;
-
-                if (order == "sow")
-                    m_message_to_p.back().msg = message_to_p::SOW;
+                m_message_to_farmer.push_back(time, duration + time, activity, port, order);
             }
         }
-
-        m_time = time;
     }
 
     virtual void confluentTransition(const vle::devs::ExternalEventList& evts,
@@ -187,38 +249,8 @@ public:
     virtual void output(const vle::devs::Time &time,
                         vle::devs::ExternalEventList &output) const
     {
-        vle::devs::ExternalEvent *evt = 0;
-
-        if (not m_message_to_p.empty()) {
-            std::vector <message_to_p>::const_iterator it, et;
-
-            for (it = m_message_to_p.begin(), et = m_message_to_p.end(); it != et; ++it) {
-                evt = new vle::devs::ExternalEvent(it->port);
-                evt->putAttribute("order", new vle::value::Integer(it->msg == message_to_p::SOW));
-                evt->putAttribute("duration", new vle::value::Double(it->duration));
-                output.push_back(evt);
-            }
-        }
-
-        if (not m_queue.empty())
-            TraceModel(vle::fmt("%1% / %2% / %3% / %4%") % m_queue.front().end % time %
-                       (is_almost_equal(m_queue.front().eta, 0.0)) %
-                       (time - m_queue.front().end));
-
-        if (not m_queue.empty() and is_almost_equal(m_queue.front().eta, 0.0)) {
-            std::deque <record> copy(m_queue);
-
-            do {
-                evt = new vle::devs::ExternalEvent("out");
-                evt->putAttribute("p", new vle::value::String(copy.front().port));
-                evt->putAttribute("activity", new vle::value::String(copy.front().activity));
-                evt->putAttribute("order", new vle::value::String(copy.front().order));
-                output.push_back(evt);
-
-                std::pop_heap(copy.begin(), copy.end());
-                copy.pop_back();
-            } while (not copy.empty() and is_almost_equal(copy.front().eta, 0.0));
-        }
+        m_message_to_plot.send(output);
+        m_message_to_farmer.send(time, output);
     }
 
     virtual vle::value::Value * observation(

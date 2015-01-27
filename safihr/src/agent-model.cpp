@@ -27,12 +27,10 @@
 #include <vle/utils/Package.hpp>
 #include <vle/utils/Rand.hpp>
 #include <vle/utils/i18n.hpp>
-#include <boost/algorithm/string/iter_find.hpp>
-#include <boost/algorithm/string/finder.hpp>
-#include <boost/algorithm/string/classification.hpp>
+#include <boost/unordered_map.hpp>
 #include <fstream>
-#include <iostream>
 #include "global.hpp"
+#include "gnuplot.hpp"
 #include "crop.hpp"
 #include "strategic.hpp"
 #include "lu.hpp"
@@ -54,7 +52,9 @@ struct CropSoilStateList
 {
     void insert(const std::string& name)
     {
-        lst.emplace(name, CropSoilState());
+        lst.insert(
+            std::make_pair <std::string, CropSoilState>(
+                name, CropSoilState()));
     }
 
     const CropSoilState& get(const std::string& plot) const
@@ -146,6 +146,8 @@ class Farmer : public vle::devs::Executive,
         }
     }
 
+    void activities_observation();
+
     void register_outputs();
     void activity_out(const std::string& name,
                       const vle::extension::decision::Activity& activity,
@@ -202,8 +204,7 @@ class Farmer : public vle::devs::Executive,
             }
 
             DTraceModel(vle::fmt("agent assign crop: %1% to plot: %2%") %
-                        crop_to_string(it->second[0]) %
-                        it->first);
+                        it->second[0] % it->first);
 
             ++i;
         }
@@ -213,12 +214,12 @@ public:
     Farmer(const vle::devs::ExecutiveInit& mdl,
            const vle::devs::InitEventList& evts)
         : vle::devs::Executive(mdl, evts)
-        , m_prediction_size(5)
+        , m_prediction_size(7)
     {
         vle::utils::Package pack("safihr");
 
         {
-            std::ifstream ifs(pack.getDataFile("Assolement-test.txt"));
+            std::ifstream ifs(pack.getDataFile("Assolement-test.txt").c_str());
             if (!ifs.is_open())
                 throw vle::utils::ModellingError(
                     vle::fmt("farmer: fails to open %1%") % "Assolement-test.txt");
@@ -231,7 +232,7 @@ public:
         }
 
         {
-            std::ifstream ifs(pack.getDataFile("Farm.txt"));
+            std::ifstream ifs(pack.getDataFile("Farm.txt").c_str());
             if (!ifs.is_open())
                 throw vle::utils::ModellingError(
                     vle::fmt("farmer: fails to open %1%") % "Farm.txt");
@@ -243,7 +244,7 @@ public:
         }
 
         {
-            std::ifstream ifs(pack.getDataFile("Crop.txt"));
+            std::ifstream ifs(pack.getDataFile("Crop.txt").c_str());
             if (!ifs.is_open())
                 throw vle::utils::ModellingError(
                     vle::fmt("farmer: fails to open %1%") % "Crop.txt");
@@ -285,6 +286,11 @@ public:
         return 0.0;
     }
 
+    virtual void finish()
+    {
+        build_grantt_observation(activities());
+    }
+
     virtual void output(const vle::devs::Time& time,
                         vle::devs::ExternalEventList& output) const
     {
@@ -296,8 +302,6 @@ public:
                 const Farmer::ActivityList& lst = latestStartedActivities();
                 Farmer::ActivityList::const_iterator it = lst.begin();
                 for (; it != lst.end(); ++it) {
-                    std::cout << std::fixed << m_time
-                              << " farmer output " << (*it)->first << std::endl;
                     (*it)->second.output((*it)->first, output);
                 }
             }
@@ -327,8 +331,6 @@ public:
 
     virtual vle::devs::Time timeAdvance() const
     {
-        // std::cout << "farmer: ta: " << activities() << std::endl;
-
         switch (mState) {
         case Init:
         case Output:
@@ -376,10 +378,10 @@ public:
             const vle::value::Map& atts = (*it)->getAttributes();
 
             if (port == "ack") {
-                TraceModel("farmer receives ack");
-
                 const std::string& activity(atts.getString("activity"));
                 const std::string& order(atts.getString("order"));
+
+                TraceModel(vle::fmt("farmer receives ack (%1% - %2%)") % activity % order);
 
                 if (order == "done") {
                     setActivityDone(activity, time);
@@ -400,6 +402,7 @@ public:
                 if (atts.exist("harvestable"))
                     harvestable_fact(port, atts);
             } else {
+                assert(false);
                 vle::value::Map::const_iterator jt = atts.value().find("value");
                 if (jt == atts.end()) {
                     jt = atts.value().find("init");
@@ -455,50 +458,6 @@ void Farmer::register_outputs()
 //
 // Facts
 //
-static void split_activity_name(const std::string& activity,
-                                std::string *operation,
-                                std::string *crop,
-                                std::string *plot,
-                                int *index)
-{
-    std::vector <boost::iterator_range <std::string::const_iterator> > v;
-    v.reserve(5u);
-
-    boost::algorithm::iter_split(v, activity,
-                                 boost::algorithm::token_finder(
-                                     boost::algorithm::is_any_of("_")));
-
-    switch (v.size()) {
-    case 3u:
-        if (operation)
-            operation->assign(v[0].begin(), v[0].end());
-        if (crop)
-            crop->assign(v[1].begin(), v[1].end());
-        if (plot)
-            plot->assign(v[2].begin(), v[2].end());
-        break;
-    case 4u:
-        if (operation)
-            operation->assign(v[0].begin(), v[0].end());
-        if (crop)
-            crop->assign(v[2].begin(), v[2].end());
-        if (plot)
-            plot->assign(v[3].begin(), v[3].end());
-        if (index) {
-            try {
-                *index = boost::lexical_cast <int>(
-                    std::string(v[1].begin(), v[1].end()));
-            } catch (...) {
-                throw vle::utils::ModellingError(
-                    vle::fmt("Bad activity name: %1%") % activity);
-            }
-        }
-        break;
-    default:
-        throw vle::utils::ModellingError(
-            vle::fmt("Bad activity name: %1%") % activity);
-    }
-}
 
 void Farmer::activity_out(const std::string& name,
                           const vle::extension::decision::Activity& activity,
@@ -506,29 +465,27 @@ void Farmer::activity_out(const std::string& name,
 {
     (void)activity;
 
-    std::string crop, plot;
-    split_activity_name(name, 0, &crop, &plot, 0);
+    if (activity.isInStartedState()) {
+        std::string crop, plot, order = "other";
+        split_activity_name(name, 0, &crop, &plot, 0);
 
-    if (name.find("Seed") != std::string::npos and activity.isInStartedState()) {
-        std::string order = "sow";
-
-        const Crop& c = m_crops.get(crop);
-
-        double duration = c.get_begin(m_time) + m_rand.getInt(1, c.duration) - m_time;
+        if (name.find("Seeding") != std::string::npos or name.find("Sowing") != std::string::npos)
+            order = "sow";
+        else if (name.find("Harvest") != std::string::npos)
+            order = "harvest";
 
         vle::devs::ExternalEvent *evt = new vle::devs::ExternalEvent("os");
         evt->putAttribute("p", new vle::value::String(plot));
         evt->putAttribute("order", new vle::value::String(order));
+        evt->putAttribute("crop", new vle::value::String(crop));
         evt->putAttribute("activity", new vle::value::String(name));
-        evt->putAttribute("duration", new vle::value::Double(duration));
-
-        lst.push_back(evt);
+        evt->putAttribute("duration", new vle::value::Double(2.0));
 
         DTraceModel(vle::fmt("activity %1% sends output to %2% order %3% "
-                             "for a duration of %3%") % name % plot % order
-                    % duration);
-    }
+                             "for a duration of 2.0") % name % plot % order);
 
+        lst.push_back(evt);
+    }
 }
 
 void Farmer::register_facts()
@@ -648,8 +605,13 @@ bool Farmer::is_penetrability_plot_valid(const std::string& activity,
     if (op == ">=")
         return m_crop_soil_state.get(plot).ru >= value;
 
-    if (op == "=")
+    if (op == "=") {
+        DTraceModel(vle::fmt("penetrability %1% %2% == %3% (%4%)")
+                    % op % value % m_crop_soil_state.get(plot).ru
+                    % (is_almost_equal(m_crop_soil_state.get(plot).ru, value)));
+
         return is_almost_equal(m_crop_soil_state.get(plot).ru, value);
+    }
 
     throw vle::utils::ModellingError(
         vle::fmt("farmer predicate penetrability: unknown operator %1%") % op);
@@ -683,20 +645,12 @@ double Farmer::get_sum_rain(int day_number) const
     if (day_number <= 2)
         return (m_rain_prediction[0] + m_rain_prediction[1]) / 2.0;
 
-    if (m_rain.size() < static_cast <size_t>(day_number))
-        throw vle::utils::ModellingError(
-            "farmer: not enough memory for rain");
-
     return std::accumulate(m_rain.begin(), m_rain.begin() + day_number,
                            0.0) / day_number;
 }
 
 double Farmer::get_sum_petp(int day_number) const
 {
-    if (day_number < 0 or m_etp.size() < static_cast <size_t>(day_number))
-        throw vle::utils::ModellingError(
-            "farmer: not enough memory for p-etp");
-
     std::vector <double> petp(day_number);
 
     std::transform(m_rain.begin(), m_rain.begin() + day_number,
@@ -719,6 +673,12 @@ bool Farmer::is_rain_quantity_sum_valid(const std::string& activity,
     double number = param.getDouble("sum_rain_number");
     double value = param.getDouble("sum_rain_threshold");
 
+    if (m_rain.size() < static_cast <size_t>(number)) {
+        DTraceModel(vle::fmt("Farmer: not enough rain in memory (%1%/%2%)")
+                    % number % m_rain.size());
+        return false;
+    }
+
     if (op == "<=")
         return get_sum_rain(static_cast <int>(number)) <= value;
 
@@ -733,10 +693,21 @@ bool Farmer::is_petp_quantity_sum_valid(const std::string& activity,
     (void)activity;
     (void)rule;
 
-    double day_number = param.getDouble("rain_day_number");
-    double value = param.getDouble("p-etp_sum");
+    std::string op = param.getString("sum_R-PET_operator");
+    double day_number = param.getDouble("sum_R-PET_number");
+    double value = param.getDouble("sum_R-PET_threshold");
 
-    return get_sum_petp(static_cast <int>(day_number)) <= value;
+    if (day_number < 0 or m_etp.size() < static_cast <size_t>(day_number)) {
+        DTraceModel(vle::fmt("Farmer: not enough etp in memory (%1%/%2%)")
+                    % day_number % m_etp.size());
+        return false;
+    }
+
+    if (op == "<=")
+        return get_sum_petp(static_cast <int>(day_number)) <= value;
+
+    throw vle::utils::ModellingError(
+        vle::fmt("farmer predicate sum_R-PET: unknown operator %1%") % op);
 }
 
 bool Farmer::is_etp_quantity_valid(const std::string& activity,
@@ -746,9 +717,15 @@ bool Farmer::is_etp_quantity_valid(const std::string& activity,
     (void)activity;
     (void)rule;
 
-    return m_etp_prediction[1] > param.getDouble("etp_param");
-}
+    std::string op = param.getString("etp_operator");
+    double value = param.getDouble("etp_threshold");
 
+    if (op == "<=")
+        return m_rain_prediction[1] <= value;
+
+    throw vle::utils::ModellingError(
+        vle::fmt("farmer predicate rain: unknown operator %1%") % op);
+}
 
 } // namespace safihr
 

@@ -24,7 +24,6 @@
 #include <vle/devs/DynamicsDbg.hpp>
 #include <vle/utils/Package.hpp>
 #include <exception>
-#include <iostream>
 #include <boost/shared_ptr.hpp>
 #include "global.hpp"
 #include "3rd-party/gnuplot_i.hpp"

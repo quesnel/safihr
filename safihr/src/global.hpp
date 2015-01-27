@@ -24,6 +24,10 @@
 #define SAFIHR_GLOBAL_HPP
 
 #include <vle/utils/i18n.hpp>
+#include <vle/utils/Exception.hpp>
+#include <boost/algorithm/string/iter_find.hpp>
+#include <boost/algorithm/string/finder.hpp>
+#include <boost/algorithm/string/classification.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/cast.hpp>
 #include <exception>
@@ -66,6 +70,52 @@ inline std::string landunit_model_name(int i)
     return std::string(&buffer[0], written);
 }
 
+inline void split_activity_name(const std::string& activity,
+                                std::string *operation,
+                                std::string *crop,
+                                std::string *plot,
+                                int *index)
+{
+    std::vector <boost::iterator_range <std::string::const_iterator> > v;
+    v.reserve(5u);
+
+    boost::algorithm::iter_split(v, activity,
+                                 boost::algorithm::token_finder(
+                                     boost::algorithm::is_any_of("_")));
+
+    switch (v.size()) {
+    case 3u:
+        if (operation)
+            operation->assign(v[0].begin(), v[0].end());
+        if (crop)
+            crop->assign(v[1].begin(), v[1].end());
+        if (plot)
+            plot->assign(v[2].begin(), v[2].end());
+        break;
+    case 4u:
+        if (operation)
+            operation->assign(v[0].begin(), v[0].end());
+        if (crop)
+            crop->assign(v[2].begin(), v[2].end());
+        if (plot)
+            plot->assign(v[3].begin(), v[3].end());
+        if (index) {
+            try {
+                *index = boost::lexical_cast <int>(
+                    std::string(v[1].begin(), v[1].end()));
+            } catch (...) {
+                throw vle::utils::ModellingError(
+                    vle::fmt("Bad activity name: %1%") % activity);
+            }
+        }
+        break;
+    default:
+        throw vle::utils::ModellingError(
+            vle::fmt("Bad activity name: %1%") % activity);
+    }
+}
+
+
 inline double stod(const std::string &str)
 {
     try {
@@ -88,8 +138,10 @@ inline int stoi(const std::string &str)
 template <typename T>
 bool is_almost_equal(const T a, const T b)
 {
-    const T scale = (std::abs(a) + std::abs(b)) / T(2.0);
-    return std::abs(a - b) <= (scale * std::numeric_limits<T>::epsilon());
+//     const T scale = (std::abs(a) + std::abs(b)) / T(2.0);
+//     return std::abs(a - b) <= (scale * std::numeric_limits<T>::epsilon());
+
+    return std::abs(a - b) <= 0.1;
 }
 
 }

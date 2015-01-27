@@ -1,8 +1,8 @@
-Id	Name	Date (y-m-d)	Random duration (day)
-SB	BS	10-1		15
-OSR	Colza	7-1		14
-F	Lin	7-10		21
-WB	Orge	7-1		14
-Po	PDT	9-10		10
-P	Pois	7-15		16
-W	Wheat	7-15		16
+Id	Name	Type	Month	Day	Random duration (day)
+SB	BS	summer	10	1	15
+OSR	Colza	winter	7	1	14
+F	Lin	summer	7	10	21
+WB	Orge	winter	7	1	14
+Po	PDT	summer	9	10	10
+P	Pois	winter	7	15	16
+W	Wheat	winter	7	15	16

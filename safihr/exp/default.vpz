@@ -127,13 +127,13 @@
 <views>
 <outputs>
 <output name="crop" location="" format="local" package="vle.output"  plugin="file" >
-<map><key name="flush-by-bag"><boolean>false</boolean></key><key name="julian-day"><boolean>false</boolean></key><key name="locale"><string>C</string></key><key name="type"><string>text</string></key></map></output>
+<map><key name="flush-by-bag"><boolean>false</boolean></key><key name="julian-day"><boolean>true</boolean></key><key name="locale"><string>C</string></key><key name="type"><string>text</string></key></map></output>
 
 <output name="meteo" location="" format="local" package="vle.output"  plugin="file" >
-<map><key name="flush-by-bag"><boolean>false</boolean></key><key name="julian-day"><boolean>false</boolean></key><key name="locale"><string>C</string></key><key name="type"><string>text</string></key></map></output>
+<map><key name="flush-by-bag"><boolean>false</boolean></key><key name="julian-day"><boolean>true</boolean></key><key name="locale"><string>C</string></key><key name="type"><string>text</string></key></map></output>
 
 <output name="ru" location="" format="local" package="vle.output"  plugin="file" >
-<map><key name="flush-by-bag"><boolean>false</boolean></key><key name="julian-day"><boolean>false</boolean></key><key name="locale"><string>C</string></key><key name="type"><string>text</string></key></map></output>
+<map><key name="flush-by-bag"><boolean>false</boolean></key><key name="julian-day"><boolean>true</boolean></key><key name="locale"><string>C</string></key><key name="type"><string>text</string></key></map></output>
 
 </outputs>
 <observables>
