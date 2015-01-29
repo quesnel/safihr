@@ -353,6 +353,11 @@ void Plan::fillActivities(const utils::Block::BlocksResult& acts,
         if (temporal.first != temporal.second) {
             fillTemporal(temporal, act, loadTime);
         }
+
+        UB::RealsResult speed = block.reals.equal_range("speed_ha_per_day");
+        if (speed.first != speed.second) {
+            act.setSpeed(speed.first->second);
+        }
     }
 }
 

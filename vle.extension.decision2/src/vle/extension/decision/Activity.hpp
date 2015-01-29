@@ -94,7 +94,8 @@ public:
         m_maxfinish(devs::infinity),
         m_started(devs::negativeInfinity),
         m_ff(devs::negativeInfinity),
-        m_done(devs::negativeInfinity)
+        m_done(devs::negativeInfinity),
+        m_speed_ha_per_day(-1.0)
     {}
 
     //
@@ -235,6 +236,9 @@ public:
      */
     devs::Time nextTime(const devs::Time& time);
 
+    void setSpeed(const vle::devs::Time& speed);
+    const vle::devs::Time& speed() const { return m_speed_ha_per_day; }
+
 private:
     void startedDate(const devs::Time& date) { m_started = date; }
     void ffDate(const devs::Time& date) { m_ff = date; }
@@ -258,6 +262,8 @@ private:
     devs::Time m_started; /** Date when the activity is started. */
     devs::Time m_ff; /**< Date when the activity is valid ff. */
     devs::Time m_done; /** Date when the activity is done. */
+
+    vle::devs::Time m_speed_ha_per_day;
 
     AckFct mAckFct;
     OutFct mOutFct;

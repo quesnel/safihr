@@ -149,6 +149,15 @@ devs::Time Activity::nextTime(const devs::Time& time)
     return result;
 }
 
+void Activity::setSpeed(const vle::devs::Time& speed)
+{
+    if (speed < 0.0 or vle::devs::isInfinity(speed))
+        throw vle::utils::ModellingError(
+            vle::fmt("fails to assign speed %1% to this activity") % speed);
+
+    m_speed_ha_per_day = speed;
+}
+
 bool Activity::isValidTimeConstraint(const devs::Time& time) const
 {
     switch (m_date & (START | FINISH | MINS | MAXS | MINF | MAXF)) {

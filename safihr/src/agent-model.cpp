@@ -479,10 +479,20 @@ void Farmer::activity_out(const std::string& name,
         evt->putAttribute("order", new vle::value::String(order));
         evt->putAttribute("crop", new vle::value::String(crop));
         evt->putAttribute("activity", new vle::value::String(name));
-        evt->putAttribute("duration", new vle::value::Double(2.0));
+
+        // Get speed of this activity and the size of the plot to build
+        // the duration. Default, the duration of any activity is one day.
+        double speed = 1.0;
+        if (activity.speed() > 0.0)
+            speed = m_lus.lus.at(split_plot_name(plot)).sau / activity.speed();
+
+        evt->putAttribute("duration", new vle::value::Double(speed));
 
         DTraceModel(vle::fmt("activity %1% sends output to %2% order %3% "
-                             "for a duration of 2.0") % name % plot % order);
+                             "for a duration of %4% (%5%/%6%)")
+                    % name % plot % order % speed
+                    % m_lus.lus.at(split_plot_name(plot)).sau
+                    % activity.speed());
 
         lst.push_back(evt);
     }

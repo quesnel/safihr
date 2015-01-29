@@ -70,6 +70,17 @@ inline std::string landunit_model_name(int i)
     return std::string(&buffer[0], written);
 }
 
+inline int split_plot_name(const std::string& plotname)
+{
+    try {
+        std::string id = plotname.substr(1, std::string::npos);
+        return boost::lexical_cast <int>(id);
+    } catch (const std::exception& /*e*/) {
+        throw vle::utils::ModellingError(
+            vle::fmt("Bad plot name: %1%") % plotname);
+    }
+}
+
 inline void split_activity_name(const std::string& activity,
                                 std::string *operation,
                                 std::string *crop,
