@@ -22,15 +22,14 @@
 
 #include <string>
 #include <fstream>
-#include <iterator>
+#include <vector>
+#include <map>
 #include <vle/utils/DateTime.hpp>
 #include <vle/utils/Package.hpp>
-#include <boost/unordered_map.hpp>
 #include "global.hpp"
 #include "gnuplot.hpp"
 
 namespace safihr {
-
 
 static void write_gnuplot(std::ostream& os,
                           const std::string& data_filename,
@@ -40,7 +39,11 @@ static void write_gnuplot(std::ostream& os,
                           const std::string& title,
                           const std::string& subtitle)
 {
-    os <<  "set terminal svg size 600," << size * 400
+    min -= 1.0;
+    max += 1.0;
+
+    os << std::fixed
+       << "set terminal svg size 1000," << size * 400
        << " dynamic enhanced fname 'arial'  fsize 10 mousing name \""
        << "Gantt\" butt dashlength 1.0\n"
        << "set output '" << data_filename << ".svg' \n"
@@ -57,11 +60,12 @@ static void write_gnuplot(std::ostream& os,
        << "set style data lines\n"
        << "set mxtics 4.000000\n"
        << "set xtics border in scale 2,0.5 nomirror norotate  autojustify\n"
-       << "set xtics " << min << " " << max << "\n"
+       << "set xtics " << min << ", " << max << "\n"
        << "set ytics border in scale 1,0.5 nomirror norotate  autojustify\n"
        << "set ytics  norangelimit\n"
        << "set ytics   ()\n"
        << "set title \"{/=15 " << title << "}\\n\\n{/:Bold " << subtitle << "}\" \n"
+//       << "set xrange [" << min << ":" << max << "] noreverse nowriteback\n"
        << "set yrange [ -1.00000 : * ] noreverse nowriteback\n"
        << "T(N) = timecolumn(N,timeformat)\n"
        << "timeformat = \"%Y-%m-%d\"\n"
@@ -107,7 +111,7 @@ struct observation_compare
 
 struct crop_po_observation
 {
-    typedef boost::unordered_map <std::string, std::vector <observation> > container_type;
+    typedef std::map <std::string, std::vector <observation> > container_type;
     typedef container_type::value_type value_type;
     typedef container_type::const_iterator const_iterator;
     typedef container_type::iterator iterator;
@@ -136,7 +140,6 @@ struct crop_po_observation
             std::string data = (vle::fmt("%1%.dat") % it->first).str();
             std::string gp = (vle::fmt("%1%.gp") % it->first).str();
 
-            // Write data file
             {
                 std::ofstream ofs(data.c_str());
                 ofs << "#Task\tstart\tend\n";
@@ -144,8 +147,6 @@ struct crop_po_observation
                 for (size_t i = 0, e = it->second.size(); i != e; ++i)
                     ofs << it->second[i];
             }
-
-            // Write gnuplot file
 
             {
                 std::ofstream ofs(gp.c_str());
@@ -206,7 +207,6 @@ struct all_observation
 
 struct grantt_observation
 {
-
     grantt_observation(const vle::extension::decision::Activities& activities)
         : min(vle::devs::infinity)
         , max(vle::devs::negativeInfinity)
@@ -242,6 +242,12 @@ struct grantt_observation
         all.sort();
     }
 
+    void write()
+    {
+        crops.write(min, max);
+        all.write(min, max);
+    }
+
     crop_po_observation crops;
     all_observation all;
     double min, max;
@@ -253,34 +259,7 @@ void build_grantt_observation(const vle::extension::decision::Activities& activi
     vle::utils::Package pack("safihr");
     grantt_observation grantt(activities);
 
-    grantt.all.sort();
-    grantt.crops.sort();
-    grantt.all.write(grantt.min, grantt.max);
-    grantt.crops.write(grantt.min, grantt.max);
-
-    // grantt_observation::const_iterator it = grantt.lst.begin();
-    // while (it != grantt.lst.end()) {
-
-    //     grantt_observation::const_iterator prev = it;
-
-    //     {
-    //         std::ofstream ofs((vle::fmt("ITK-%1%.dat") % it->first).str().c_str());
-    //         assert(ofs.is_open());
-    //         ofs << "#Task\tstart\tend\n";
-
-    //         do {
-    //             ofs << it->second;
-    //             prev = it++;
-    //         } while (it != grantt.lst.end() and prev->first == it->first);
-    //     }
-
-    //     {
-    //         std::ofstream ofs((vle::fmt("ITK-%1%.gp") % prev->first).str().c_str());
-    //         assert(ofs.is_open());
-
-    //         write_gnuplot(ofs, prev->first, grantt.min, 1);
-    //     }
-    // }
+    grantt.write();
 }
 
 }
