@@ -158,6 +158,7 @@ activities { # Activites list
         ressources = 2;
 	speed_ha_per_day = 15;
 	output = "out";
+	update = "itk_end";
     }
 
     activity {

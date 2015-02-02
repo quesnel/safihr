@@ -33,18 +33,56 @@ namespace safihr {
 
 struct CropRotation
 {
-    typedef std::map <int, std::vector <std::string> > crop_rotation_type;
-    typedef crop_rotation_type::const_iterator const_iterator;
-    typedef crop_rotation_type::iterator iterator;
+    CropRotation()
+        : current(0u)
+    {}
 
-    typedef std::vector <int> year_rotation_type;
+    typedef std::vector <std::string> container_type;
+    typedef container_type::value_type value_type;
+    typedef container_type::const_iterator const_iterator;
+    typedef container_type::iterator iterator;
 
-    year_rotation_type years;
-    crop_rotation_type crops;
+    // Returns current crop of this rotation
+    const std::string& current_crop() const
+    {
+        return crop_rotation.at(current);
+    }
+
+    // Advance current and return new crop.
+    const std::string& next_crop()
+    {
+        return crop_rotation.at(++current);
+    }
+
+    container_type crop_rotation;
+    size_t current;
+};
+
+struct Plots
+{
+    typedef std::vector <CropRotation> container_type;
+    typedef container_type::value_type value_type;
+    typedef container_type::const_iterator const_iterator;
+    typedef container_type::iterator iterator;
+
+    CropRotation& get(size_t plot) { return plots.at(plot); }
+    const CropRotation& get(size_t plot) const { return plots.at(plot); }
+
+    bool empty() const { return plots.empty(); }
+    size_t size() const { return plots.size() ;}
+    iterator begin() { return plots.begin(); }
+    iterator end() { return plots.end(); }
+    const_iterator begin() const { return plots.begin(); }
+    const_iterator end() const { return plots.end(); }
+
+    container_type plots;
 };
 
 std::istream& operator>>(std::istream &is, CropRotation &rotation);
 std::ostream& operator<<(std::ostream &os, const CropRotation &rotation);
+std::istream& operator>>(std::istream &is, Plots &plots);
+std::ostream& operator<<(std::ostream &os, const Plots &plots);
+
 bool operator==(const CropRotation& lhs, const CropRotation& rhs);
 
 }

@@ -89,7 +89,7 @@ class Farmer : public vle::devs::Executive,
 {
     typedef vle::extension::decision::Activities::result_t ActivityList;
 
-    CropRotation m_rotation;
+    Plots m_rotation;
     Crops m_crops;
     LandUnits m_lus;
 
@@ -183,12 +183,10 @@ class Farmer : public vle::devs::Executive,
     {
         vle::utils::Package pack("safihr");
 
-        int i = 0;
-        for (CropRotation::const_iterator it = m_rotation.crops.begin();
-             it != m_rotation.crops.end(); ++it) {
-            m_crop_soil_state.insert((vle::fmt("p%1%") % it->first).str());
+        for (size_t i = 0, e = m_rotation.size(); i != e; ++i) {
+            m_crop_soil_state.insert((vle::fmt("p%1%") % i).str());
 
-            std::string filename = (vle::fmt("ITK-%1%.txt") % it->second[0]).str();
+            std::string filename = (vle::fmt("ITK-%1%.txt") % m_rotation.get(i).current_crop()).str();
             std::string filepath = pack.getDataFile(filename);
             std::ifstream ifs(filepath.c_str());
             if (not ifs.is_open())
@@ -196,7 +194,7 @@ class Farmer : public vle::devs::Executive,
                     vle::fmt("farmer: fail to open %1%") % filepath);
 
             try {
-                plan().fill(ifs, time, (vle::fmt("_p%1%") % (it->first)).str());
+                plan().fill(ifs, time, (vle::fmt("_%1%_p%2%") % 0 % i).str());
             } catch (const std::exception& e) {
                 throw vle::utils::ModellingError(
                     vle::fmt("farmer: fail to read %1% (plot: %2%): %3%") %
@@ -204,9 +202,67 @@ class Farmer : public vle::devs::Executive,
             }
 
             DTraceModel(vle::fmt("agent assign crop: %1% to plot: %2%") %
-                        it->second[0] % it->first);
+                        m_rotation.get(i).current_crop() % i);
+        }
+    }
 
-            ++i;
+    /// TODO: work in progress
+    /// search the next occurence of ITK
+
+    void register_updates()
+    {
+        addUpdateFunctions(this) += U("itk_end", &Farmer::end_of_itk_update);
+    }
+
+    void end_of_itk_update(const std::string& name,
+                           const vle::extension::decision::Activity& activity)
+    {
+        if (not activity.isInDoneState())
+            return;
+
+        std::string operation, crop, plot;
+        int index, year;
+
+        split_activity_name(name, &operation, &index, &crop, &year, &plot);
+
+        // Cleanup previous crop harvestable boolean
+        m_crop_soil_state.get(plot).harvestable = false;
+
+        // Get the next crop and instantiate it.
+        int plotid = boost::lexical_cast <int>(plot.substr(1, std::string::npos));
+        const std::string& newcrop = m_rotation.get(plotid).next_crop();
+
+        vle::utils::Package pack("safihr");
+        std::string filepath = pack.getDataFile((vle::fmt("ITK-%1%.txt") % newcrop).str());
+
+        try {
+            std::ifstream ifs(filepath.c_str());
+
+            if (m_crops.get(newcrop).is_summer) {
+                DTraceModel(
+                    vle::fmt("agent assign summer crop %1% to plot %2% with load time %3%")
+                    % newcrop % plotid
+                    % vle::utils::DateTime::toJulianDay(get_next_first_january(m_time)));
+
+                plan().fill(ifs,
+                            get_next_first_january(m_time),
+                            (vle::fmt("_%1%_p%2%") % m_rotation.get(plotid).current
+                             % plotid).str());
+            } else {
+                DTraceModel(
+                    vle::fmt("agent assign winter crop %1% to plot %2% with load time %3%")
+                    % newcrop % plotid
+                    % vle::utils::DateTime::toJulianDay(m_time + 1));
+
+                plan().fill(ifs,
+                            m_time + 1,
+                            (vle::fmt("_%1%_p%2%") % m_rotation.get(plotid).current
+                             % plotid).str());
+            }
+        } catch (const std::exception& e) {
+            throw vle::utils::ModellingError(
+                vle::fmt("farmer fails to append itk %1% from file %2% for plot %3% (%4%)")
+                % newcrop % filepath % plotid % e.what());
         }
     }
 
@@ -265,6 +321,7 @@ public:
         m_rain_prediction.resize(m_prediction_size + 2);
         m_etp_prediction.resize(m_prediction_size + 2);
 
+        register_updates();
         register_predicates();
         register_facts();
         register_outputs();
@@ -467,7 +524,7 @@ void Farmer::activity_out(const std::string& name,
 
     if (activity.isInStartedState()) {
         std::string crop, plot, order = "other";
-        split_activity_name(name, 0, &crop, &plot, 0);
+        split_activity_name(name, NULL, NULL, &crop, NULL, &plot);
 
         if (name.find("Seeding") != std::string::npos or name.find("Sowing") != std::string::npos)
             order = "sow";
@@ -592,7 +649,7 @@ bool Farmer::is_harvestable(const std::string& activity,
     (void)param;
 
     std::string plot;
-    split_activity_name(activity, NULL, NULL, &plot, NULL);
+    split_activity_name(activity, NULL, NULL, NULL, NULL, &plot);
 
     return m_crop_soil_state.get(plot).harvestable;
 }
@@ -607,7 +664,7 @@ bool Farmer::is_penetrability_plot_valid(const std::string& activity,
     double value = param.getDouble("penetrability_threshold");
 
     std::string plot;
-    split_activity_name(activity, NULL, NULL, &plot, NULL);
+    split_activity_name(activity, NULL, NULL, NULL, NULL, &plot);
 
     if (op == "<")
         return m_crop_soil_state.get(plot).ru < value;

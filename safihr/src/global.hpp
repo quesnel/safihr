@@ -23,7 +23,9 @@
 #ifndef SAFIHR_GLOBAL_HPP
 #define SAFIHR_GLOBAL_HPP
 
+#include <vle/devs/Time.hpp>
 #include <vle/utils/i18n.hpp>
+#include <vle/utils/DateTime.hpp>
 #include <vle/utils/Exception.hpp>
 #include <boost/algorithm/string/iter_find.hpp>
 #include <boost/algorithm/string/finder.hpp>
@@ -81,35 +83,58 @@ inline int split_plot_name(const std::string& plotname)
     }
 }
 
+/**
+ * From the current @time, compute the next 1 january.
+ *
+ * @example
+ * assert(vle::utils::DataTime::toJulianDay(
+ *            get_next_first_janury(
+ *                vle::utils::DataTime::toJulianDay("2010-10-1")))
+ *        == std::string("2011-1-1"));
+ * @endexample
+ */
+inline vle::devs::Time get_next_first_january(vle::devs::Time time)
+{
+    unsigned int year = vle::utils::DateTime::year(time);
+
+    return vle::utils::DateTime::toJulianDayNumber((vle::fmt("%1%-1-1") % (year + 1)).str());
+}
+
 inline void split_activity_name(const std::string& activity,
                                 std::string *operation,
+                                int *index,
                                 std::string *crop,
-                                std::string *plot,
-                                int *index)
+                                int *year,
+                                std::string *plot)
 {
     std::vector <boost::iterator_range <std::string::const_iterator> > v;
-    v.reserve(5u);
+    v.reserve(6u);
 
     boost::algorithm::iter_split(v, activity,
                                  boost::algorithm::token_finder(
                                      boost::algorithm::is_any_of("_")));
 
     switch (v.size()) {
-    case 3u:
-        if (operation)
-            operation->assign(v[0].begin(), v[0].end());
-        if (crop)
-            crop->assign(v[1].begin(), v[1].end());
-        if (plot)
-            plot->assign(v[2].begin(), v[2].end());
-        break;
     case 4u:
         if (operation)
             operation->assign(v[0].begin(), v[0].end());
         if (crop)
-            crop->assign(v[2].begin(), v[2].end());
+            crop->assign(v[1].begin(), v[1].end());
+        if (year) {
+            try {
+                *year = boost::lexical_cast <int>(
+                    std::string(v[2].begin(), v[2].end()));
+            } catch (...) {
+                throw vle::utils::ModellingError(
+                    vle::fmt("Bad activity name: %1%") % activity);
+            }
+        }
         if (plot)
             plot->assign(v[3].begin(), v[3].end());
+        break;
+    case 5u:
+        if (operation)
+            operation->assign(v[0].begin(), v[0].end());
         if (index) {
             try {
                 *index = boost::lexical_cast <int>(
@@ -119,13 +144,25 @@ inline void split_activity_name(const std::string& activity,
                     vle::fmt("Bad activity name: %1%") % activity);
             }
         }
+        if (crop)
+            crop->assign(v[2].begin(), v[2].end());
+        if (year) {
+            try {
+                *year = boost::lexical_cast <int>(
+                    std::string(v[3].begin(), v[3].end()));
+            } catch (...) {
+                throw vle::utils::ModellingError(
+                    vle::fmt("Bad activity name: %1%") % activity);
+            }
+        }
+        if (plot)
+            plot->assign(v[4].begin(), v[4].end());
         break;
     default:
         throw vle::utils::ModellingError(
             vle::fmt("Bad activity name: %1%") % activity);
     }
 }
-
 
 inline double stod(const std::string &str)
 {

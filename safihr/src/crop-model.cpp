@@ -219,11 +219,11 @@ public:
             case SOWN:
                 return new vle::value::String("sown");
             case WAIT:
-                return new vle::value::String("-");
+                return new vle::value::String("-   ");
             case HARVESTABLE:
-                return new vle::value::String("harv.");
+                return new vle::value::String("harv");
             case HARVESTED:
-                return new vle::value::String("end");
+                return new vle::value::String("end ");
             }
         }
 

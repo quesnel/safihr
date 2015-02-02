@@ -35,7 +35,8 @@ static void write_gnuplot(std::ostream& os,
                           const std::string& data_filename,
                           vle::devs::Time min,
                           vle::devs::Time max,
-                          int size,
+                          double width,
+                          double height,
                           const std::string& title,
                           const std::string& subtitle)
 {
@@ -43,7 +44,8 @@ static void write_gnuplot(std::ostream& os,
     max += 1.0;
 
     os << std::fixed
-       << "set terminal svg size 1000," << size * 400
+       << "set terminal svg size " << std::max(1.0, width) * 1000.0
+       << "," << std::max(1.0, height) * 400.0
        << " dynamic enhanced fname 'arial'  fsize 10 mousing name \""
        << "Gantt\" butt dashlength 1.0\n"
        << "set output '" << data_filename << ".svg' \n"
@@ -109,7 +111,7 @@ struct observation_compare
     }
 };
 
-struct crop_po_observation
+struct plot_observation
 {
     typedef std::map <std::string, std::vector <observation> > container_type;
     typedef container_type::value_type value_type;
@@ -117,14 +119,16 @@ struct crop_po_observation
     typedef container_type::iterator iterator;
 
     void insert(const std::string& crop, const std::string& plot,
-                const std::string& operation, double begin, double end)
+                const std::string& operation, int year, double begin, double end)
     {
         std::pair <iterator, bool> r = lst.insert(
             value_type(
-                (vle::fmt("%1%-%2%") % crop % plot).str(),
-                std::vector <observation>()));
+                plot, std::vector <observation>()));
 
-        r.first->second.push_back(observation(operation, begin, end));
+        r.first->second.push_back(
+            observation(
+                (vle::fmt("%1%-%2%-%3%") % operation % crop % year).str(),
+                begin, end));
     }
 
     void sort()
@@ -150,7 +154,60 @@ struct crop_po_observation
 
             {
                 std::ofstream ofs(gp.c_str());
-                write_gnuplot(ofs, it->first, min, max, 1,
+                write_gnuplot(ofs, it->first, min, max, 2.0, 1.0,
+                              (vle::fmt("Gantt %1%") % it->first).str(),
+                              "");
+            }
+        }
+    }
+
+    container_type lst;
+};
+
+struct crop_po_observation
+{
+    typedef std::map <std::string, std::vector <observation> > container_type;
+    typedef container_type::value_type value_type;
+    typedef container_type::const_iterator const_iterator;
+    typedef container_type::iterator iterator;
+
+    void insert(const std::string& crop, const std::string& plot,
+                const std::string& operation, int year, double begin, double end)
+    {
+        std::pair <iterator, bool> r = lst.insert(
+            value_type(
+                (vle::fmt("%1%-%2%-%3%") % crop % year % plot).str(),
+                std::vector <observation>()));
+
+        r.first->second.push_back(
+            observation(
+                operation, begin, end));
+    }
+
+    void sort()
+    {
+        for (iterator it = lst.begin(); it != lst.end(); ++it)
+            std::sort(it->second.begin(), it->second.end(),
+                      observation_compare());
+    }
+
+    void write(vle::devs::Time min, vle::devs::Time max) const
+    {
+        for (const_iterator it = lst.begin(); it != lst.end(); ++it) {
+            std::string data = (vle::fmt("%1%.dat") % it->first).str();
+            std::string gp = (vle::fmt("%1%.gp") % it->first).str();
+
+            {
+                std::ofstream ofs(data.c_str());
+                ofs << "#Task\tstart\tend\n";
+
+                for (size_t i = 0, e = it->second.size(); i != e; ++i)
+                    ofs << it->second[i];
+            }
+
+            {
+                std::ofstream ofs(gp.c_str());
+                write_gnuplot(ofs, it->first, min, max, 1.0, 1.0,
                               (vle::fmt("Gantt %1%") % it->first).str(),
                               "");
             }
@@ -168,11 +225,11 @@ struct all_observation
     typedef container_type::iterator iterator;
 
     void insert(const std::string& crop, const std::string& plot,
-                const std::string& operation, double begin, double end)
+                const std::string& operation, int year, double begin, double end)
     {
         lst.push_back(
             observation(
-                (vle::fmt("%1%-%2%-%3%") % plot % crop % operation).str(),
+                (vle::fmt("%1%-%2%-%3%-%4%") % plot % year % crop % operation).str(),
                 begin, end));
     }
 
@@ -197,8 +254,8 @@ struct all_observation
         {
             std::ofstream ofs(gp.c_str());
 
-            write_gnuplot(ofs, "ITK-all", min, max,
-                          5, "Gant all plots", "");
+            write_gnuplot(ofs, "ITK-all", min, max, 4.0, 10.0,
+                          "Gant all plots", "");
         }
     }
 
@@ -213,42 +270,44 @@ struct grantt_observation
     {
         vle::extension::decision::Activities::const_iterator it, et;
         std::string operation, crop, plot;
+        int index, year;
 
         for (it = activities.begin(), et = activities.end();  it != et; ++it) {
-            split_activity_name(it->first, &operation, &crop, &plot, 0);
+            split_activity_name(it->first, &operation, &index, &crop, &year, &plot);
 
             double begin = it->second.startedDate();
-            if (vle::devs::isNegativeInfinity(begin))
+            if (vle::devs::isInfinity(begin))
                 continue;
 
             double end = it->second.doneDate();
-            if (vle::devs::isNegativeInfinity(end)) {
+            if (vle::devs::isInfinity(end)) {
                 end = it->second.ffDate();
-                if (vle::devs::isNegativeInfinity(end))
+                if (vle::devs::isInfinity(end))
                     continue;
             }
 
-            if (min > begin)
-                min = begin;
+            min = std::min(min, begin);
+            max = std::max(max, end);
 
-            if (max < end && not vle::devs::isInfinity(end))
-                max = end;
-
-            crops.insert(crop, plot, operation, begin, end);
-            all.insert(crop, plot, operation, begin, end);
+            crops.insert(crop, plot, operation, year, begin, end);
+            plots.insert(crop, plot, operation, year, begin, end);
+            all.insert(crop, plot, operation, year, begin, end);
         }
 
         crops.sort();
+        plots.sort();
         all.sort();
     }
 
     void write()
     {
         crops.write(min, max);
+        plots.write(min, max);
         all.write(min, max);
     }
 
     crop_po_observation crops;
+    plot_observation plots;
     all_observation all;
     double min, max;
 };

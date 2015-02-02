@@ -25,68 +25,69 @@
 
 namespace safihr {
 
-std::istream& operator>>(std::istream &is, CropRotation &rotation)
+std::istream& operator>>(std::istream& is, CropRotation& rotation)
 {
+    rotation.current = 0u;
+    rotation.crop_rotation.reserve(8u);
+
     std::string tmp;
-    is >> tmp;                          /* Avoid ID string comment */
 
     while (is.good() && is.peek() != '\n') {
-        rotation.years.push_back(-1);
-        is >> rotation.years.back();
-    }
+        is >> tmp;
 
-    while (is.good()) {
-        int id;
-        is >> id;
-
-        if (is.fail() or is.eof()) {
-            is.clear(is.eofbit);
-            break;
-        }
-
-        std::pair <CropRotation::iterator, bool> ret = rotation.crops.insert(
-            std::make_pair(id, std::vector <std::string>()));
-        if (!ret.second)
-            throw std::runtime_error("same land unit define multiple times");
-
-        ret.first->second.reserve(rotation.years.size());
-        while (is.good() && is.peek() != '\n') {
-            is >> tmp;
-            ret.first->second.push_back(tmp);
-        }
-
-        // Here, we check the validity of data. Each crops must have the
-        // same number of crop than the size of the vector years.
-        if (ret.first->second.size() != rotation.years.size())
-            throw std::runtime_error("crops rotation have not the same number"
-                                     "of crop");
+        if (is.good())
+            rotation.crop_rotation.push_back(tmp);
     }
 
     return is;
 }
 
-std::ostream& operator<<(std::ostream &os, const CropRotation &rotation)
+std::ostream& operator<<(std::ostream &os, const CropRotation& rotation)
 {
-    os << "ID";
+    if (not rotation.crop_rotation.empty()) {
+        CropRotation::const_iterator it = rotation.crop_rotation.begin();
 
-    for (size_t i = 0, e = rotation.years.size(); i != e; ++i)
-        os << '\t' << rotation.years[i];
-
-    for (CropRotation::const_iterator it = rotation.crops.begin(),
-             et = rotation.crops.end(); it != et; ++it) {
-
-        os << '\n' << it->first;
-
-        for (size_t i = 0, e = it->second.size(); i != e; ++i)
-            os << "\t" << it->second[i];
+        do {
+            os << '\t' << *it++;
+        } while (it != rotation.crop_rotation.end());
     }
 
     return os;
 }
 
-bool operator==(const CropRotation& lhs, const CropRotation& rhs)
+std::istream& operator>>(std::istream& is, Plots& plots)
 {
-    return lhs.years == rhs.years && lhs.crops == rhs.crops;
+    plots.plots.clear();
+    plots.plots.reserve(20u);
+
+    std::string tmp;
+    int index;
+    std::getline(is, tmp);
+
+    while (is.good()) {
+        is >> index;
+
+        plots.plots.push_back(CropRotation());
+        is >> plots.plots.back();
+
+        if (is.fail())
+            plots.plots.pop_back();
+    }
+
+    if (is.fail() or is.eof())
+        is.clear(is.eofbit);
+
+    return is;
+}
+
+std::ostream& operator<<(std::ostream &os, const Plots& plots)
+{
+    os << "ID\tyears\n";
+
+    for (size_t i = 0, e = plots.plots.size(); i != e; ++i)
+        os << i << plots.plots[i] << '\n';
+
+    return os;
 }
 
 }

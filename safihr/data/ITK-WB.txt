@@ -3,289 +3,282 @@
 #Predicates
 
 predicates { #Predicates list
-	predicate {
-		id = "FieldPenetrability_sup_38";
-		type = "penetrability";
-		parameter {
-		penetrability_operator = ">=";
-      		penetrability_threshold = 38.0;
-		}
-	}
+        predicate {
+                id = "FieldPenetrability_sup_38";
+                type = "penetrability";
+                parameter {
+                        penetrability_operator = ">=";
+                        penetrability_threshold = 38.0;
+                }
+        }
 
-	predicate {
-		id = "FieldPenetrability_inf_38";
-		type = "penetrability";
-		parameter {
-		penetrability_operator = "<";
-     	   	penetrability_threshold = 38.0;
-		}
-	}
+        predicate {
+                id = "FieldPenetrability_inf_38";
+                type = "penetrability";
+                parameter {
+                        penetrability_operator = "<";
+                        penetrability_threshold = 38.0;
+                }
+        }
 
-	predicate {
-		id = "FieldPenetrability_inf_40";
-		type = "penetrability";
-		parameter {
-		penetrability_operator = "<";
-     	   	penetrability_threshold = 40.0;
-		}
-	}
+        predicate {
+                id = "FieldPenetrability_inf_40";
+                type = "penetrability";
+                parameter {
+                        penetrability_operator = "<";
+                        penetrability_threshold = 40.0;
+                }
+        }
 
-	predicate {
-		id = "FieldPenetrability_40";
-		type = "penetrability";
-		parameter {
-		penetrability_operator = "=";
-     	   	penetrability_threshold = 40.0;
-		}
-	}
+        predicate {
+                id = "FieldPenetrability_40";
+                type = "penetrability";
+                parameter {
+                        penetrability_operator = "=";
+                        penetrability_threshold = 40.0;
+                }
+        }
 
-	predicate {
-		id = "rain_5";
-		type = "rain";
-		parameter {
-		rain_operator = "<=";
-		rain_threshold = 5.0;
-		}
-	}
+        predicate {
+                id = "rain_5";
+                type = "rain";
+                parameter {
+                        rain_operator = "<=";
+                        rain_threshold = 5.0;
+                }
+        }
 
-	predicate {
-		id = "rain_2";
-		type = "rain";
-		parameter {
-		rain_operator = "<=";
-		rain_threshold = 2.0;
-		}
-	}
+        predicate {
+                id = "rain_2";
+                type = "rain";
+                parameter {
+                        rain_operator = "<=";
+                        rain_threshold = 2.0;
+                }
+        }
 
-	predicate {
-		id = "2d_rain_10";
-		type = "sum_rain";
-		parameter {
-		sum_rain_operator = "<=";
-		sum_rain_number = 2.0;
-        	sum_rain_threshold = 10;
-		}
-	}
+        predicate {
+                id = "2d_rain_10";
+                type = "sum_rain";
+                parameter {
+                        sum_rain_operator = "<=";
+                        sum_rain_number = 2.0;
+                        sum_rain_threshold = 10;
+                }
+        }
 
-	predicate {
-		id = "2d_rain_8";
-		type = "sum_rain";
-		parameter {
-		sum_rain_operator = "<=";
-		sum_rain_number = 2.0;
-        	sum_rain_threshold = 8.0;
-		}
-	}
+        predicate {
+                id = "2d_rain_8";
+                type = "sum_rain";
+                parameter {
+                        sum_rain_operator = "<=";
+                        sum_rain_number = 2.0;
+                        sum_rain_threshold = 8.0;
+                }
+        }
 
-	predicate {
-		id = "3d_rain_20";
-		type = "sum_rain";
-		parameter {
-		sum_rain_operator = "<=";
-		sum_rain_number = 3.0;
-        	sum_rain_threshold = 20.0;
-		}
-	}
+        predicate {
+                id = "3d_rain_20";
+                type = "sum_rain";
+                parameter {
+                        sum_rain_operator = "<=";
+                        sum_rain_number = 3.0;
+                        sum_rain_threshold = 20.0;
+                }
+        }
 
-	predicate {
-		id = "2d_R-PET_inf_0";
-		type = "sum_R-PET";
-		parameter {
-		sum_R-PET_operator = "<=";
-		sum_R-PET_number = 2.0;
-        	sum_R-PET_threshold = 0.0;
-		}
-	}
+        predicate {
+                id = "2d_R-PET_inf_0";
+                type = "sum_R-PET";
+                parameter {
+                        sum_R-PET_operator = "<=";
+                        sum_R-PET_number = 2.0;
+                        sum_R-PET_threshold = 0.0;
+                }
+        }
 
 }
 
 ## Rules
 rules { # rules list
-    rule {
-        id = "Sowing_sub_optimal";
-        predicates = "FieldPenetrability_40", "rain_5", "2d_rain_8", "3d_rain_20";
-    }
+        rule {
+                id = "Sowing_sub_optimal";
+                predicates = "FieldPenetrability_40", "rain_5", "2d_rain_8", "3d_rain_20";
+        }
 
-    rule {
-        id = "Sowing_optimal";
-        predicates = "FieldPenetrability_inf_40", "rain_5", "2d_rain_8";
-    }
+        rule {
+                id = "Sowing_optimal";
+                predicates = "FieldPenetrability_inf_40", "rain_5", "2d_rain_8";
+        }
 
 
-    rule {
-        id = "Herbicide";
-        predicates = "FieldPenetrability_40", "rain_2";
-    }
+        rule {
+                id = "Herbicide";
+                predicates = "FieldPenetrability_40", "rain_2";
+        }
 
-    rule {
-        id = "Harvest";
-        predicates = "rain_2", "2d_rain_10", "harvestable";
-    }
+        rule {
+                id = "Harvest";
+                predicates = "rain_2", "2d_rain_10", "harvestable";
+        }
 
-    rule {
-        id = "StublePlow_sub_optimal";
-        predicates = "FieldPenetrability_sup_38", "rain_5", "2d_rain_10";
-    }
+        rule {
+                id = "StublePlow_sub_optimal";
+                predicates = "FieldPenetrability_sup_38", "rain_5", "2d_rain_10";
+        }
 
-    rule {
-        id = "StublePlow_optimal";
-        predicates = "FieldPenetrability_inf_38", "rain_5";
-    }
-    rule {
-        id = "Pressing";
-        predicates = "FieldPenetrability_inf_40", "2d_R-PET_inf_0";
-    }
+        rule {
+                id = "StublePlow_optimal";
+                predicates = "FieldPenetrability_inf_38", "rain_5";
+        }
+        rule {
+                id = "Pressing";
+                predicates = "FieldPenetrability_inf_40", "2d_R-PET_inf_0";
+        }
 }
 
 ## Activities
 activities { # Activites list
-    activity {
-        id = "Sowing_WB";
-        temporal {
-                minstart = "+0-9-21";
-                maxfinish = "+0-10-20";
+        activity {
+                id = "Sowing_WB";
+                temporal {
+                        minstart = "+0-9-21";
+                        maxfinish = "+0-10-20";
+                }
+                rules = "Sowing_sub_optimal", "Sowing_optimal";
+                ressources = 2;
+                speed_ha_per_day = 10;
+                output = "out";
         }
-        rules = "Sowing_sub_optimal", "Sowing_optimal";
-	ressources = 2;
-	speed_ha_per_day = 10;
-	output = "out";
-    }
 
-    activity {
-        id = "Herbicide_1_WB";
-        temporal {
-                minstart = "+0-11-1";
+        activity {
+                id = "Herbicide_1_WB";
+                temporal {
+                        minstart = "+0-11-1";
+                }
+                rules = "Herbicide";
+                ressources = 1;
+                speed_ha_per_day = 30;
+                output = "out";
+
+        }
+
+        activity {
+                id = "Herbicide_2_WB";
+                temporal {
+                        minstart = "+1-6-21";
+                }
+                rules = "Herbicide";
+                ressources = 1;
+                speed_ha_per_day = 30;
+                output = "out";
+
+        }
+
+        activity {
+                id = "Harvest_WB";
+#                temporal {
+#         minstart = "+1-7-1";
+# 	maxstart = "+1-7-15";	#Actual first possible day of sowing is randomely chosen between minstart and maxstart
+                        # }
+                        rules = "Harvest";
+                        ressources = 2;
+                        speed_ha_per_day = 15;
+                        output = "out";
+
+                }
+
+                activity {
+                        id = "Pressing_WB";
+                        rules = "Pressing";
+                        ressources = 2;
+                        speed_ha_per_day = 15;
+                        output = "out";
+                        update = "itk_end";
+
+                }
+
+                activity {
+                        id = "StublePlow_1_WB";
+                        temporal {
+                                maxfinish = "+0-9-20";
                         }
-        rules = "Herbicide";
-	ressources = 1;
-	speed_ha_per_day = 30;
-		output = "out";
+                        rules = "StublePlow_sub_optimal", "StublePlow_optimal";
+                        ressources = 1;
+                        speed_ha_per_day = 20;
+                        output = "out";
 
-    }
+                }
 
-    activity {
-        id = "Herbicide_2_WB";
-        temporal {
-                minstart = "+1-6-21";
+                activity {
+                        id = "StublePlow_2_WB";
+                        temporal {
+                                maxfinish = "+0-9-20";
+                        }
+                        rules = "StublePlow_sub_optimal", "StublePlow_optimal";
+                        ressources = 1;
+                        speed_ha_per_day = 20;
+                        output = "out";
+
+                }
+
+                activity {
+                        id = "StublePlow_3_WB";
+                        temporal {
+                                maxfinish = "+0-9-20";
+                        }
+                        rules = "StublePlow_sub_optimal", "StublePlow_optimal";
+                        ressources = 1;
+                        speed_ha_per_day = 20;
+                        output = "out";
+
+                }
+
         }
-        rules = "Herbicide";
-	ressources = 1;
-	speed_ha_per_day = 30;
-		output = "out";
 
-    }
-
-    activity {
-        id = "Harvest_WB";
-        temporal {
-        #         minstart = "+1-7-1";
-	# 	maxstart = "+1-7-15";	#Actual first possible day of sowing is randomely chosen between minstart and maxstart
-        # }
-        rules = "Harvest";
-        ressources = 2;
-	speed_ha_per_day = 15;
-		output = "out";
-
-    }
-
-    activity {
-        id = "Pressing_WB";
-        rules = "Pressing";
-	ressources = 2;
-	speed_ha_per_day = 15;
-		output = "out";
-
-    }
-
-    activity {
-        id = "StublePlow_1_WB";
-        temporal {
-                maxfinish = "+0-9-20";
+        ## Precedences
+                precedences {
+# precedence {
+#     type = FS;
+#     first = "??"; ## last activities of the preceding crop
+#     second = "StublePlow_1_WB";
+                # }
+                precedence {
+                        type = FS;
+                        first = "StublePlow_1_WB";
+                        second = "StublePlow_2_WB";
+                        mintimelag = 15;
+                }
+                precedence {
+                        type = FS;
+                        first = "StublePlow_2_WB";
+                        second = "StublePlow_3_WB";
+                        mintimelag = 15;
+                }
+# precedence {
+#     type = FS;
+#     first = "??"; ## last activities of the preceding crop
+#     second = "Sowing_WB";
+                # }
+                precedence {
+                        type = FS;
+                        first = "Sowing_WB";
+                        second = "Herbicide_1_WB";
+                }
+                precedence {
+                        type = FS;
+                        first = "Herbicide_1_WB";
+                        second = "Herbicide_2_WB";
+                }
+                precedence {
+                        type = FS;
+                        first = "Herbicide_2_WB";
+                        second = "Harvest_WB";
+                        mintimelag = 10;
+                }
+                precedence {
+                        type = FS;
+                        first = "Harvest_WB";
+                        second = "Pressing_WB";
+                }
         }
-        rules = "StublePlow_sub_optimal", "StublePlow_optimal";
-        ressources = 1;
-	speed_ha_per_day = 20;
-		output = "out";
-
-    }
-
-activity {
-        id = "StublePlow_2_WB";
-        temporal {
-                maxfinish = "+0-9-20";
-        }
-        rules = "StublePlow_sub_optimal", "StublePlow_optimal";
-        ressources = 1;
-	speed_ha_per_day = 20;
-		output = "out";
-
-    }
-
-activity {
-        id = "StublePlow_3_WB";
-        temporal {
-                maxfinish = "+0-9-20";
-        }
-        rules = "StublePlow_sub_optimal", "StublePlow_optimal";
-        ressources = 1;
-	speed_ha_per_day = 20;
-		output = "out";
-
-    }
-
-}
-
-## Precedences
-precedences {
-    # precedence {
-    #     type = FS;
-    #     first = "??"; ## last activities of the preceding crop
-    #     second = "StublePlow_1_WB";
-    # }
-    precedence {
-        type = FS;
-        first = "StublePlow_1_WB";
-        second = "StublePlow_2_WB";
-	mintimelag = 15;
-    }
- precedence {
-        type = FS;
-        first = "StublePlow_2_WB";
-        second = "StublePlow_3_WB";
-	mintimelag = 15;
-    }
-    # precedence {
-    #     type = FS;
-    #     first = "??"; ## last activities of the preceding crop
-    #     second = "Sowing_WB";
-    # }
-   precedence {
-        type = FS;
-        first = "Sowing_WB";
-        second = "Herbicide_1_WB";
-    }
-   precedence {
-        type = FS;
-        first = "Herbicide_1_WB";
-        second = "Herbicide_2_WB";
-    }
-   precedence {
-        type = FS;
-        first = "Herbicide_2_WB";
-        second = "Harvest_WB";
-	mintimelag = 10;
-    }
-   precedence {
-        type = FS;
-        first = "Harvest_WB";
-        second = "Pressing_WB";
-    }
-
-
-
-
-
-
-
-
-}

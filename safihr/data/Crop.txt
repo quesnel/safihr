@@ -4,5 +4,5 @@ OSR	Colza	winter	7	1	14
 F	Lin	summer	7	10	21
 WB	Orge	winter	7	1	14
 Po	PDT	summer	9	10	10
-P	Pois	winter	7	15	16
+P	Pois	summer	7	15	16
 W	Wheat	winter	7	15	16

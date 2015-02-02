@@ -111,11 +111,11 @@
 </model>
 </class>
 </classes>
-<experiment name="simple" duration="730.000000000000000" begin="2446797.000000000000000" combination="linear"  >
+<experiment name="simple" duration="1462.000000000000000" begin="2446797.000000000000000" combination="linear"  >
 <conditions>
 <condition name="meteo" >
  <port name="filename" >
-<string>meteo87-88.csv</string>
+<string>meteo87-90.csv</string>
 </port>
 </condition>
 <condition name="sensor" >
