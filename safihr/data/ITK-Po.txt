@@ -65,8 +65,8 @@ activities { #Activities list
     activity {
         id = "Sowing_Po";
         temporal {
-            minstart = "+0-1-1";
-            maxstart = "+0-1-31";
+            minstart = "+1-1-1";
+            maxstart = "+1-1-31";
         }
         output = "out";
     }
@@ -120,11 +120,11 @@ activity {
 
 ## Precedences
 precedences {
-     precedence {
-         type = FS;
-         first = "Sowing_Po";   ## last activities of the preceding crop
-         second = "StublePlow_1_Po";
-     }
+  precedence {
+          type = FS;
+          first = "Sowing_Po";   ## last activities of the preceding crop
+          second = "Harvest_Po";
+      }
     precedence {
         type = FS;
         first = "StublePlow_1_Po";

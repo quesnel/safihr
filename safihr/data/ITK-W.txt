@@ -239,20 +239,20 @@ precedences {
     #     first = "??"; ## last activities of the preceding crop
     #     second = "StublePlow_1_W";
     # }
- #    precedence {
- #        type = FS;
- #        first = "StublePlow_1_W";
- #        second = "StublePlow_2_W";
- # 	mintimelag = 15;
- #    }
- # precedence {
- #        type = FS;
- #        first = "StublePlow_2_W";
- #        second = "StublePlow_3_W";
- # 	mintimelag = 15;
- #    }
-   #  precedence {
-   #      type = FS;
+     precedence {
+         type = FS;
+         first = "StublePlow_1_W";
+         second = "StublePlow_2_W";
+  	mintimelag = 15;
+     }
+  precedence {
+         type = FS;
+         first = "StublePlow_2_W";
+         second = "StublePlow_3_W";
+  	mintimelag = 15;
+     }
+  #    precedence {
+  #        type = FS;
    #      first = "??"; ## last activities of the preceding crop
    #      second = "Sowing_W";
    #  }
@@ -266,12 +266,12 @@ precedences {
         first = "Herbicide_1_W";
         second = "Herbicide_2_W";
     }
-   precedence {
-        type = FS;
-        first = "Herbicide_2_W";
-        second = "Harvest_W";
-	mintimelag = 10;
-    }
+   # precedence {
+   #      type = FS;
+   #      first = "Herbicide_2_W";
+   #      second = "Harvest_W";
+   # 	mintimelag = 10;
+   #  }
   precedence {
         type = FS;
         first = "Harvest_W";

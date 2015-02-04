@@ -149,8 +149,8 @@ activities { # Activites list
     activity {
         id = "StublePlowSeeding_F";
         temporal {
-            minstart = "+0-1-1";
-            maxstart = "+0-1-31";
+            minstart = "+1-1-1";
+            maxstart = "+1-1-31";
         }
         output = "out";
     }
@@ -229,6 +229,11 @@ activity {
 
 ## Precedences
 precedences {
+      precedence {
+          type = FS;
+          first = "StublePlowSeeding_F"; ## last activities of the preceding crop
+          second = "Harvest_F";
+}
      precedence {
         type = FS;
         first = "Harvest_F";
@@ -248,11 +253,12 @@ precedences {
 	mintimelag = 10;
     }
 
-     precedence {
-         type = FS;
-         first = "StublePlowSeeding_F"; ## last activities of the preceding crop
-         second = "StublePlow_1_F";
-     }
+     # precedence {
+     #     type = FS;
+     #     first = "StublePlowSeeding_F"; ## last activities of the preceding crop
+     #     second = "StublePlow_1_F";
+     # 	mintimelag = 15;
+     # }
      precedence {
         type = FS;
         first = "StublePlow_1_F";

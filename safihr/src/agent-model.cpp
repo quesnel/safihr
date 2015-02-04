@@ -239,27 +239,15 @@ class Farmer : public vle::devs::Executive,
         try {
             std::ifstream ifs(filepath.c_str());
 
-            if (m_crops.get(newcrop).is_summer) {
-                DTraceModel(
-                    vle::fmt("agent assign summer crop %1% to plot %2% with load time %3%")
-                    % newcrop % plotid
-                    % vle::utils::DateTime::toJulianDay(get_next_first_january(m_time)));
+            DTraceModel(
+                vle::fmt("agent assign winter crop %1% to plot %2% with load time %3%")
+                % newcrop % plotid
+                % vle::utils::DateTime::toJulianDay(m_time + 1));
 
-                plan().fill(ifs,
-                            get_next_first_january(m_time),
-                            (vle::fmt("_%1%_p%2%") % m_rotation.get(plotid).current
-                             % plotid).str());
-            } else {
-                DTraceModel(
-                    vle::fmt("agent assign winter crop %1% to plot %2% with load time %3%")
-                    % newcrop % plotid
-                    % vle::utils::DateTime::toJulianDay(m_time + 1));
-
-                plan().fill(ifs,
-                            m_time + 1,
-                            (vle::fmt("_%1%_p%2%") % m_rotation.get(plotid).current
-                             % plotid).str());
-            }
+            plan().fill(ifs,
+                        m_time + 1,
+                        (vle::fmt("_%1%_p%2%") % m_rotation.get(plotid).current
+                         % plotid).str());
         } catch (const std::exception& e) {
             throw vle::utils::ModellingError(
                 vle::fmt("farmer fails to append itk %1% from file %2% for plot %3% (%4%)")
