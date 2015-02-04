@@ -3,76 +3,76 @@
 #Predicates
 
 predicates { #Predicates list
-    predicate {
-        id = "FieldPenetrability_sup_38";
-        type = "penetrability";
-        parameter {
-            penetrability_operator = ">=";
-            penetrability_threshold = 38.0;
-        }
-    }
+	predicate {
+		id = "FieldPenetrability_sup_38";
+		type = "penetrability";
+		parameter {
+			penetrability_operator = ">=";
+			penetrability_threshold = 38.0;
+		}
+	}
 
-    predicate {
-        id = "FieldPenetrability_inf_38";
-        type = "penetrability";
-        parameter {
-            penetrability_operator = "<";
-            penetrability_threshold = 38.0;
-        }
-    }
+	predicate {
+		id = "FieldPenetrability_inf_38";
+		type = "penetrability";
+		parameter {
+			penetrability_operator = "<";
+			penetrability_threshold = 38.0;
+		}
+	}
 
-    predicate {
-        id = "rain_5";
-        type = "rain";
-        parameter {
-            rain_operator = "<=";
-            rain_threshold = 5.0;
-        }
-    }
+	predicate {
+		id = "rain_5";
+		type = "rain";
+		parameter {
+			rain_operator = "<=";
+			rain_threshold = 5.0;
+		}
+	}
 
-    predicate {
-        id = "2d_rain_10";
-        type = "sum_rain";
-        parameter {
-            sum_rain_operator = "<=";
-            sum_rain_number = 2.0;
-            sum_rain_threshold = 10.0;
-        }
-    }
+	predicate {
+		id = "2d_rain_10";
+		type = "sum_rain";
+		parameter {
+			sum_rain_operator = "<=";
+			sum_rain_number = 2.0;
+			sum_rain_threshold = 10.0;
+		}
+	}
 
-    predicate {
-        id = "3d_rain_20";
-        type = "sum_rain";
-        parameter {
-            sum_rain_operator = "<=";
-            sum_rain_number = 3.0;
-            sum_rain_threshold = 20.0;
-        }
-    }
+	predicate {
+		id = "3d_rain_20";
+		type = "sum_rain";
+		parameter {
+			sum_rain_operator = "<=";
+			sum_rain_number = 3.0;
+			sum_rain_threshold = 20.0;
+		}
+	}
 }
 
 ## Rules
 rules { # Rules list
 
-    rule {
-        id = "Harvest_SB_optimal";
-        predicates = "FieldPenetrability_inf_38", "rain_5", "harvestable";
-    }
+	rule {
+		id = "Harvest_SB_optimal";
+		predicates = "FieldPenetrability_inf_38", "rain_5", "harvestable";
+	}
 
-    rule {
-        id = "Harvest_SB_sub_optimal";
-        predicates = "FieldPenetrability_sup_38", "rain_5", "2d_rain_10", "3d_rain_20", "harvestable";
-    }
+	rule {
+		id = "Harvest_SB_sub_optimal";
+		predicates = "FieldPenetrability_sup_38", "rain_5", "2d_rain_10", "3d_rain_20", "harvestable";
+	}
 
-    rule {
-        id = "StublePlow_sub_optimal";
-        predicates = "FieldPenetrability_sup_38", "rain_5", "2d_rain_10";
-    }
+	rule {
+		id = "StublePlow_sub_optimal";
+		predicates = "FieldPenetrability_sup_38", "rain_5", "2d_rain_10";
+	}
 
-    rule {
-        id = "StublePlow_optimal";
-        predicates = "FieldPenetrability_inf_38", "rain_5";
-    }
+	rule {
+		id = "StublePlow_optimal";
+		predicates = "FieldPenetrability_inf_38", "rain_5";
+	}
 }
 
 ## minstart = 01/01/10; => minstart = "+0-1-10";
@@ -81,59 +81,59 @@ rules { # Rules list
 ## Activities
 activities { # Activities list
 
-    activity {
-        id = "StublePlowSeeding_SB";
-        temporal {
-            minstart = "+0-1-1";
-            maxstart = "+0-1-31";
-        }
-        output = "out";
-    }
+	activity {
+		id = "StublePlowSeeding_SB";
+		temporal {
+			minstart = "+0-1-1";
+			maxstart = "+0-1-31";
+		}
+		output = "out";
+	}
 
-    activity {
-        id = "Harvest_1_SB";  #1/3 of sugar beet cultivated area
-        rules = "Harvest_SB_optimal", "Harvest_SB_sub_optimal";
-        ressources = 2;
-        speed_ha_per_day = 10;
-        output = "out";
-    }
+	activity {
+		id = "Harvest_1_SB";  #1/3 of sugar beet cultivated area
+			rules = "Harvest_SB_optimal", "Harvest_SB_sub_optimal";
+		ressources = 2;
+		speed_ha_per_day = 10;
+		output = "out";
+	}
 
-    activity {
-        id = "Harvest_2_SB";    #1/3 of sugar beet cultivated area
-                                    rules = "Harvest_SB_optimal", "Harvest_SB_sub_optimal";
-        ressources = 2;
-        speed_ha_per_day = 10;
-        output = "out";
-    }
+	activity {
+		id = "Harvest_2_SB";    #1/3 of sugar beet cultivated area
+			rules = "Harvest_SB_optimal", "Harvest_SB_sub_optimal";
+		ressources = 2;
+		speed_ha_per_day = 10;
+		output = "out";
+	}
 
-    activity {
-        id = "Harvest_3_SB";  #1/3 of sugar beet cultivated area
-                                  rules = "Harvest_SB_optimal", "Harvest_SB_sub_optimal";
-        ressources = 2;
-        speed_ha_per_day = 10;
-        output = "out";
-	update = "itk_end";
-		    }
+	activity {
+		id = "Harvest_3_SB";  #1/3 of sugar beet cultivated area
+			rules = "Harvest_SB_optimal", "Harvest_SB_sub_optimal";
+		ressources = 2;
+		speed_ha_per_day = 10;
+		output = "out";
+		update = "itk_end";
+	}
 }
 
 ## Precedences
 precedences {
-    precedence {
-        type = FS;
-        first = "StublePlowSeeding_SB";
-        second = "Harvest_1_SB";
-    }
-    precedence {
-        type = FS;
-        first = "Harvest_1_SB";
-        second = "Harvest_2_SB";
-        mintimelag = 10;
-    }
+	precedence {
+		type = FS;
+		first = "StublePlowSeeding_SB";
+		second = "Harvest_1_SB";
+	}
+	precedence {
+		type = FS;
+		first = "Harvest_1_SB";
+		second = "Harvest_2_SB";
+		mintimelag = 10;
+	}
 
-    precedence {
-        type = FS;
-        first = "Harvest_2_SB";
-        second = "Harvest_3_SB";
-        mintimelag = 10;
-    }
+	precedence {
+		type = FS;
+		first = "Harvest_2_SB";
+		second = "Harvest_3_SB";
+		mintimelag = 10;
+	}
 }

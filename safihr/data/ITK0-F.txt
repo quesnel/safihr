@@ -7,8 +7,8 @@ predicates { #Predicates list
 		id = "FieldPenetrability_sup_38";
 		type = "penetrability";
 		parameter {
-		penetrability_operator = ">=";
-      		penetrability_threshold = 38.0;
+			penetrability_operator = ">=";
+			penetrability_threshold = 38.0;
 		}
 	}
 
@@ -16,8 +16,8 @@ predicates { #Predicates list
 		id = "FieldPenetrability_inf_38";
 		type = "penetrability";
 		parameter {
-		penetrability_operator = "<";
-     	   	penetrability_threshold = 38.0;
+			penetrability_operator = "<";
+			penetrability_threshold = 38.0;
 		}
 	}
 
@@ -25,8 +25,8 @@ predicates { #Predicates list
 		id = "FieldPenetrability_inf_37";
 		type = "penetrability";
 		parameter {
-		penetrability_operator = "<";
-     	  	 penetrability_threshold = 37.0;
+			penetrability_operator = "<";
+			penetrability_threshold = 37.0;
 		}
 	}
 
@@ -34,8 +34,8 @@ predicates { #Predicates list
 		id = "rain_5";
 		type = "rain";
 		parameter {
-		rain_operator = "<=";
-		rain_threshold = 5.0;
+			rain_operator = "<=";
+			rain_threshold = 5.0;
 		}
 	}
 
@@ -43,8 +43,8 @@ predicates { #Predicates list
 		id = "rain_2";
 		type = "rain";
 		parameter {
-		rain_operator = "<=";
-		rain_threshold = 2.0;
+			rain_operator = "<=";
+			rain_threshold = 2.0;
 		}
 	}
 
@@ -52,9 +52,9 @@ predicates { #Predicates list
 		id = "2d_rain_10";
 		type = "sum_rain";
 		parameter {
-		sum_rain_operator = "<=";
-		sum_rain_number = 2.0;
-        	sum_rain_threshold = 10;
+			sum_rain_operator = "<=";
+			sum_rain_number = 2.0;
+			sum_rain_threshold = 10;
 		}
 	}
 
@@ -62,9 +62,9 @@ predicates { #Predicates list
 		id = "2d_rain_1";
 		type = "sum_rain";
 		parameter {
-		sum_rain_operator = "<=";
-		sum_rain_number = 2.0;
-        	sum_rain_threshold = 1.0;
+			sum_rain_operator = "<=";
+			sum_rain_number = 2.0;
+			sum_rain_threshold = 1.0;
 		}
 	}
 
@@ -72,9 +72,9 @@ predicates { #Predicates list
 		id = "2d_rain_3";
 		type = "sum_rain";
 		parameter {
-		sum_rain_operator = "<=";
-		sum_rain_number = 2.0;
-        	sum_rain_threshold = 3.0;
+			sum_rain_operator = "<=";
+			sum_rain_number = 2.0;
+			sum_rain_threshold = 3.0;
 		}
 	}
 
@@ -82,9 +82,9 @@ predicates { #Predicates list
 		id = "4d_rain_7";
 		type = "sum_rain";
 		parameter {
-		sum_rain_operator = "<=";
-		sum_rain_number = 4.0;
-        	sum_rain_threshold = 7.0;
+			sum_rain_operator = "<=";
+			sum_rain_number = 4.0;
+			sum_rain_threshold = 7.0;
 		}
 	}
 
@@ -92,9 +92,9 @@ predicates { #Predicates list
 		id = "4d_rain_5";
 		type = "sum_rain";
 		parameter {
-		sum_rain_operator = "<=";
-		sum_rain_number = 4.0;
-        	sum_rain_threshold = 5.0;
+			sum_rain_operator = "<=";
+			sum_rain_number = 4.0;
+			sum_rain_threshold = 5.0;
 		}
 	}
 
@@ -102,8 +102,8 @@ predicates { #Predicates list
 		id = "PET_sup_1-5";
 		type = "etp";
 		parameter {
-		etp_operator = "<=";
-		etp_threshold = 1.5;
+			etp_operator = "<=";
+			etp_threshold = 1.5;
 		}
 	}
 }
@@ -112,65 +112,65 @@ predicates { #Predicates list
 ## Rules
 rules { # Rules list
 
-    rule {
-        id = "Harvest_F";
-        predicates = "FieldPenetrability_inf_37", "2d_rain_3", "harvestable";
-    }
+	rule {
+		id = "Harvest_F";
+		predicates = "FieldPenetrability_inf_37", "2d_rain_3", "harvestable";
+	}
 
-    rule {
-        id = "Stripping_F";
-        predicates = "2d_rain_1", "4d_rain_7";
-    }
+	rule {
+		id = "Stripping_F";
+		predicates = "2d_rain_1", "4d_rain_7";
+	}
 
-    rule {
-        id = "turning_F";
-        predicates = "2d_rain_1";
-    }
+	rule {
+		id = "turning_F";
+		predicates = "2d_rain_1";
+	}
 
-    rule {
-        id = "pressing_F";
-        predicates = "2d_rain_1", "4d_rain_5", "PET_sup_1-5";
-    }
+	rule {
+		id = "pressing_F";
+		predicates = "2d_rain_1", "4d_rain_5", "PET_sup_1-5";
+	}
 
-    rule {
-        id = "StublePlow_sub_optimal";
-        predicates = "FieldPenetrability_sup_38", "rain_5", "2d_rain_10";
-    }
+	rule {
+		id = "StublePlow_sub_optimal";
+		predicates = "FieldPenetrability_sup_38", "rain_5", "2d_rain_10";
+	}
 
-    rule {
-        id = "StublePlow_optimal";
-        predicates = "FieldPenetrability_inf_38", "rain_5";
- }
+	rule {
+		id = "StublePlow_optimal";
+		predicates = "FieldPenetrability_inf_38", "rain_5";
+	}
 }
 
 ## Activities
 activities { # Activites list
 
-    activity {
-        id = "StublePlowSeeding_F";
-        temporal {
-            minstart = "+0-1-1";
-            maxstart = "+0-1-31";
-        }
-        output = "out";
-    }
+	activity {
+		id = "StublePlowSeeding_F";
+		temporal {
+			minstart = "+0-1-1";
+			maxstart = "+0-1-31";
+		}
+		output = "out";
+	}
 
-    activity {
-        id = "Harvest_F";
-        rules = "Harvest_F";
-        ressources = 0;
-	speed_ha_per_day = 10;
-	output = "out";
-	update = "itk_end";
-    }
+	activity {
+		id = "Harvest_F";
+		rules = "Harvest_F";
+		ressources = 0;
+		speed_ha_per_day = 10;
+		output = "out";
+		update = "itk_end";
+	}
 }
 
 ## Precedences
 precedences {
-     precedence {
-        type = FS;
-         first = "StublePlowSeeding_F"; ## last activities of the preceding crop
-         second = "Harvest_F";
-     }
+	precedence {
+		type = FS;
+		first = "StublePlowSeeding_F"; ## last activities of the preceding crop
+			second = "Harvest_F";
+	}
 
 }

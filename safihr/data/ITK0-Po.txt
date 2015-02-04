@@ -7,8 +7,8 @@ predicates { #Predicates list
 		id = "FieldPenetrability_sup_38";
 		type = "penetrability";
 		parameter {
-		penetrability_operator = ">=";
-      		penetrability_threshold = 38.0;
+			penetrability_operator = ">=";
+			penetrability_threshold = 38.0;
 		}
 	}
 
@@ -16,8 +16,8 @@ predicates { #Predicates list
 		id = "FieldPenetrability_inf_38";
 		type = "penetrability";
 		parameter {
-		penetrability_operator = "<";
-     	   	penetrability_threshold = 38.0;
+			penetrability_operator = "<";
+			penetrability_threshold = 38.0;
 		}
 	}
 
@@ -25,8 +25,8 @@ predicates { #Predicates list
 		id = "rain_5";
 		type = "rain";
 		parameter {
-		rain_operator = "<=";
-		rain_threshold = 5.0;
+			rain_operator = "<=";
+			rain_threshold = 5.0;
 		}
 	}
 
@@ -34,9 +34,9 @@ predicates { #Predicates list
 		id = "2d_rain_10";
 		type = "sum_rain";
 		parameter {
-		sum_rain_operator = "<=";
-		sum_rain_number = 2.0;
-        	sum_rain_threshold = 10;
+			sum_rain_operator = "<=";
+			sum_rain_number = 2.0;
+			sum_rain_threshold = 10;
 		}
 	}
 }
@@ -44,47 +44,47 @@ predicates { #Predicates list
 ## Rules
 rules { #Rules list
 
-    rule {
-        id = "Harvest_Po";
-        predicates = "FieldPenetrability_inf_38", "rain_5", "2d_rain_10", "harvestable";
-    }
+	rule {
+		id = "Harvest_Po";
+		predicates = "FieldPenetrability_inf_38", "rain_5", "2d_rain_10", "harvestable";
+	}
 
-    rule {
-        id = "StublePlow_sub_optimal";
-        predicates = "FieldPenetrability_sup_38", "rain_5", "2d_rain_10";
-    }
+	rule {
+		id = "StublePlow_sub_optimal";
+		predicates = "FieldPenetrability_sup_38", "rain_5", "2d_rain_10";
+	}
 
-    rule {
-        id = "StublePlow_optimal";
-        predicates = "FieldPenetrability_inf_38", "rain_5";
- }
+	rule {
+		id = "StublePlow_optimal";
+		predicates = "FieldPenetrability_inf_38", "rain_5";
+	}
 }
 
 ## Activities
 activities { #Activities list
-    activity {
-        id = "Sowing_Po";
-        temporal {
-            minstart = "+0-1-1";
-            maxstart = "+0-1-31";
-        }
-        output = "out";
-    }
-activity {
-        id = "Harvest_Po";
-        rules = "Harvest_Po";
-        ressources = 2;
-	speed_ha_per_day = 4;
-	output = "out";
-	update = "itk_end";
-    }
+	activity {
+		id = "Sowing_Po";
+		temporal {
+			minstart = "+0-1-1";
+			maxstart = "+0-1-31";
+		}
+		output = "out";
+	}
+	activity {
+		id = "Harvest_Po";
+		rules = "Harvest_Po";
+		ressources = 2;
+		speed_ha_per_day = 4;
+		output = "out";
+		update = "itk_end";
+	}
 }
 
 ## Precedences
 precedences {
-     precedence {
-         type = FS;
-         first = "Sowing_Po";   ## last activities of the preceding crop
-         second = "Harvest_Po";
-     }
+	precedence {
+		type = FS;
+		first = "Sowing_Po";   ## last activities of the preceding crop
+			second = "Harvest_Po";
+	}
 }
