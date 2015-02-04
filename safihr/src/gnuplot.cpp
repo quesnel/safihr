@@ -80,15 +80,15 @@ static void write_gnuplot(std::ostream& os,
        << "1 with labels right offset -2\n";
 }
 
-struct observation
+struct gnuplot_observation
 {
-    observation(const std::string& task_, double begin_, double end_)
+    gnuplot_observation(const std::string& task_, double begin_, double end_)
         : task(task_)
         , begin(begin_)
         , end(end_)
     {}
 
-    observation()
+    gnuplot_observation()
     {}
 
     std::string task;
@@ -96,24 +96,59 @@ struct observation
     double end;
 };
 
-std::ostream& operator<<(std::ostream& os, const observation& item)
+std::ostream& operator<<(std::ostream& os, const gnuplot_observation& item)
 {
     return os << item.task << '\t'
               << vle::utils::DateTime::toJulianDayNumber(item.begin) << '\t'
               << vle::utils::DateTime::toJulianDayNumber(item.end) << '\n';
 }
 
-struct observation_compare
+struct gnuplot_observation_compare
 {
-    bool operator()(const observation& a, const observation& b) const
+    bool operator()(const gnuplot_observation& a, const gnuplot_observation& b) const
     {
         return a.begin < b.begin;
     }
 };
 
-struct plot_observation
+struct complete_observation
 {
-    typedef std::map <std::string, std::vector <observation> > container_type;
+    complete_observation(const std::string& crop_, const std::string& plot_,
+                         const std::string& operation_, int year_,
+                         double begin_, double end_)
+        : crop(crop_), plot(plot_), operation(operation_), year(year_),
+          begin(begin_), end(end_)
+    {}
+
+    std::string crop, plot, operation;
+    int year;
+    double begin, end;
+};
+
+std::ostream& operator<<(std::ostream& os, const complete_observation& obs)
+{
+    return os << obs.begin << ';'
+              << obs.end << ';'
+              << vle::utils::DateTime::toJulianDay(obs.begin) << ';'
+              << vle::utils::DateTime::toJulianDay(obs.end) << ';'
+              << obs.crop << ';'
+              << obs.plot << ';'
+              << obs.operation << ';'
+              << obs.year << ';';
+}
+
+struct complete_observation_compare
+{
+    bool operator()(const complete_observation& a,
+                    const complete_observation& b) const
+    {
+        return a.begin < b.begin;
+    }
+};
+
+struct gnuplot_plot_observation
+{
+    typedef std::map <std::string, std::vector <gnuplot_observation> > container_type;
     typedef container_type::value_type value_type;
     typedef container_type::const_iterator const_iterator;
     typedef container_type::iterator iterator;
@@ -123,10 +158,10 @@ struct plot_observation
     {
         std::pair <iterator, bool> r = lst.insert(
             value_type(
-                plot, std::vector <observation>()));
+                plot, std::vector <gnuplot_observation>()));
 
         r.first->second.push_back(
-            observation(
+            gnuplot_observation(
                 (vle::fmt("%1%-%2%-%3%") % operation % crop % year).str(),
                 begin, end));
     }
@@ -135,7 +170,7 @@ struct plot_observation
     {
         for (iterator it = lst.begin(); it != lst.end(); ++it)
             std::sort(it->second.begin(), it->second.end(),
-                      observation_compare());
+                      gnuplot_observation_compare());
     }
 
     void write(vle::devs::Time min, vle::devs::Time max) const
@@ -164,9 +199,9 @@ struct plot_observation
     container_type lst;
 };
 
-struct crop_po_observation
+struct gnuplot_crop_po_observation
 {
-    typedef std::map <std::string, std::vector <observation> > container_type;
+    typedef std::map <std::string, std::vector <gnuplot_observation> > container_type;
     typedef container_type::value_type value_type;
     typedef container_type::const_iterator const_iterator;
     typedef container_type::iterator iterator;
@@ -177,10 +212,10 @@ struct crop_po_observation
         std::pair <iterator, bool> r = lst.insert(
             value_type(
                 (vle::fmt("%1%-%2%-%3%") % crop % year % plot).str(),
-                std::vector <observation>()));
+                std::vector <gnuplot_observation>()));
 
         r.first->second.push_back(
-            observation(
+            gnuplot_observation(
                 operation, begin, end));
     }
 
@@ -188,7 +223,7 @@ struct crop_po_observation
     {
         for (iterator it = lst.begin(); it != lst.end(); ++it)
             std::sort(it->second.begin(), it->second.end(),
-                      observation_compare());
+                      gnuplot_observation_compare());
     }
 
     void write(vle::devs::Time min, vle::devs::Time max) const
@@ -217,9 +252,9 @@ struct crop_po_observation
     container_type lst;
 };
 
-struct all_observation
+struct gnuplot_all_observation
 {
-    typedef std::vector <observation> container_type;
+    typedef std::vector <gnuplot_observation> container_type;
     typedef container_type::value_type value_type;
     typedef container_type::const_iterator const_iterator;
     typedef container_type::iterator iterator;
@@ -228,14 +263,14 @@ struct all_observation
                 const std::string& operation, int year, double begin, double end)
     {
         lst.push_back(
-            observation(
+            gnuplot_observation(
                 (vle::fmt("%1%-%2%-%3%-%4%") % plot % year % crop % operation).str(),
                 begin, end));
     }
 
     void sort()
     {
-        std::sort(lst.begin(), lst.end(), observation_compare());
+        std::sort(lst.begin(), lst.end(), gnuplot_observation_compare());
     }
 
     void write(vle::devs::Time min, vle::devs::Time max) const
@@ -257,6 +292,36 @@ struct all_observation
             write_gnuplot(ofs, "ITK-all", min, max, 4.0, 10.0,
                           "Gant all plots", "");
         }
+    }
+
+    container_type lst;
+};
+
+struct csv_complete_observation
+{
+    typedef std::set <complete_observation, complete_observation_compare> container_type;
+    typedef container_type::value_type value_type;
+    typedef container_type::const_iterator const_iterator;
+    typedef container_type::iterator iterator;
+
+    void insert(const std::string& crop, const std::string& plot,
+                const std::string& operation, int year, double begin, double end)
+    {
+        lst.insert(
+            complete_observation(
+                crop, plot, operation, year, begin, end));
+    }
+
+    void write()
+    {
+        std::ofstream ofs("complete.csv");
+
+        ofs << "start;end;start date;end date;crop;plot;operation;year\n"
+            << std::fixed;
+
+        std::copy(lst.begin(), lst.end(),
+                  std::ostream_iterator <complete_observation>(
+                      ofs, "\n"));
     }
 
     container_type lst;
@@ -292,6 +357,7 @@ struct grantt_observation
             crops.insert(crop, plot, operation, year, begin, end);
             plots.insert(crop, plot, operation, year, begin, end);
             all.insert(crop, plot, operation, year, begin, end);
+            csv.insert(crop, plot, operation, year, begin, end);
         }
 
         crops.sort();
@@ -304,11 +370,13 @@ struct grantt_observation
         crops.write(min, max);
         plots.write(min, max);
         all.write(min, max);
+        csv.write();
     }
 
-    crop_po_observation crops;
-    plot_observation plots;
-    all_observation all;
+    gnuplot_crop_po_observation crops;
+    gnuplot_plot_observation plots;
+    gnuplot_all_observation all;
+    csv_complete_observation csv;
     double min, max;
 };
 
