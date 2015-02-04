@@ -1,0 +1,157 @@
+#Oil seed rape (OSD) crop management - MDE FARM
+
+#Predicates
+
+predicates { #Predicates list
+	predicate {
+		id = "FieldPenetrability_sup_38";
+		type = "penetrability";
+		parameter {
+		penetrability_operator = ">=";
+      		penetrability_threshold = 38.0;
+		}
+	}
+
+	predicate {
+		id = "FieldPenetrability_inf_38";
+		type = "penetrability";
+		parameter {
+		penetrability_operator = "<";
+     	   	penetrability_threshold = 38.0;
+		}
+	}
+
+	predicate {
+		id = "FieldPenetrability_inf_40";
+		type = "penetrability";
+		parameter {
+		penetrability_operator = "<";
+     	   	penetrability_threshold = 40.0;
+		}
+	}
+
+	predicate {
+		id = "FieldPenetrability_40";
+		type = "penetrability";
+		parameter {
+		penetrability_operator = "=";
+     	   	penetrability_threshold = 40.0;
+		}
+	}
+
+	predicate {
+		id = "rain_5";
+		type = "rain";
+		parameter {
+		rain_operator = "<=";
+		rain_threshold = 5.0;
+		}
+	}
+
+	predicate {
+		id = "rain_2";
+		type = "rain";
+		parameter {
+		rain_operator = "<=";
+		rain_threshold = 2.0;
+		}
+	}
+
+	predicate {
+		id = "2d_rain_10";
+		type = "sum_rain";
+		parameter {
+		sum_rain_operator = "<=";
+		sum_rain_number = 2.0;
+        	sum_rain_threshold = 10;
+		}
+	}
+
+	predicate {
+		id = "2d_rain_8";
+		type = "sum_rain";
+		parameter {
+		sum_rain_operator = "<=";
+		sum_rain_number = 2.0;
+        	sum_rain_threshold = 8.0;
+		}
+	}
+
+	predicate {
+		id = "3d_rain_20";
+		type = "sum_rain";
+		parameter {
+		sum_rain_operator = "<=";
+		sum_rain_number = 3.0;
+        	sum_rain_threshold = 20.0;
+		}
+	}
+
+}
+
+## Rules
+rules { # rules list
+    rule {
+        id = "Sowing_sub_optimal";
+        predicates = "FieldPenetrability_40", "rain_5", "2d_rain_8", "3d_rain_20";
+    }
+
+    rule {
+        id = "Sowing_optimal";
+        predicates = "FieldPenetrability_inf_40", "rain_5", "2d_rain_8";
+    }
+
+
+    rule {
+        id = "Herbicide";
+        predicates = "FieldPenetrability_40", "rain_2";
+    }
+
+    rule {
+        id = "Harvest";
+        predicates = "rain_2", "2d_rain_10", "harvestable";
+    }
+
+    rule {
+        id = "StublePlow_sub_optimal";
+        predicates = "FieldPenetrability_sup_38", "rain_5", "2d_rain_10";
+    }
+
+    rule {
+        id = "StublePlow_optimal";
+        predicates = "FieldPenetrability_inf_38", "rain_5";
+    }
+}
+
+## Activities
+activities { # Activites list
+    activity {
+        id = "Sowing_OSR";
+        temporal {
+                minstart = "+0-8-26";
+                maxfinish = "+0-9-15";
+        }
+        rules = "Sowing_sub_optimal", "Sowing_optimal";
+	ressources = 2;
+	speed_ha_per_day = 10;
+	output = "out";
+    }
+    activity {
+        id = "Harvest_OSR";
+        rules = "Harvest";
+        ressources = 2;
+	speed_ha_per_day = 15;
+	output = "out";
+	update = "itk_end";
+    }
+}
+
+## Precedences
+precedences {
+   precedence {
+        type = FS;
+        first = "Sowing_OSR";
+        second = "Harvest_OSR";
+    }
+
+}

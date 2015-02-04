@@ -186,7 +186,8 @@ class Farmer : public vle::devs::Executive,
         for (size_t i = 0, e = m_rotation.size(); i != e; ++i) {
             m_crop_soil_state.insert((vle::fmt("p%1%") % i).str());
 
-            std::string filename = (vle::fmt("ITK-%1%.txt") % m_rotation.get(i).current_crop()).str();
+            std::string filename = (vle::fmt("ITK0-%1%.txt") %
+                                    m_rotation.get(i).current_crop()).str();
             std::string filepath = pack.getDataFile(filename);
             std::ifstream ifs(filepath.c_str());
             if (not ifs.is_open())
