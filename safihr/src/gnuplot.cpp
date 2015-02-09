@@ -300,7 +300,7 @@ struct gnuplot_all_observation
 
 struct csv_complete_observation
 {
-    typedef std::set <complete_observation, complete_observation_compare> container_type;
+    typedef std::multiset <complete_observation, complete_observation_compare> container_type;
     typedef container_type::value_type value_type;
     typedef container_type::const_iterator const_iterator;
     typedef container_type::iterator iterator;
