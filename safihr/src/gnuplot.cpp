@@ -317,7 +317,7 @@ struct csv_complete_observation
     {
         std::ofstream ofs("complete.csv");
 
-        ofs << "start;end;start date;end date;crop;plot;operation;year\n"
+        ofs << "start;end;start date;end date;crop;plot;operation;itk_number\n"
             << std::fixed;
 
         std::copy(lst.begin(), lst.end(),
