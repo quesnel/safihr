@@ -161,6 +161,30 @@ activities { # Activites list
 		ressources = 0;
 		speed_ha_per_day = 10;
 		output = "out";
+	}
+
+	activity {
+		id = "Stripping_F";
+		rules = "Stripping_F";
+		ressources = 1;
+		speed_ha_per_day = 10;
+		output = "out";
+	}
+
+	activity {
+		id = "turning_F";
+		rules = "turning_F";
+		ressources = 1;
+		speed_ha_per_day = 10;
+		output = "out";
+	}
+
+	activity {
+		id = "pressing_F";
+		rules = "pressing_F";
+		ressources = 2;
+		speed_ha_per_day = 6;
+		output = "out";
 		update = "itk_end";
 	}
 }
@@ -171,6 +195,24 @@ precedences {
 		type = FS;
 		first = "StublePlowSeeding_F"; ## last activities of the preceding crop
 			second = "Harvest_F";
+	}
+	precedence {
+		type = FS;
+		first = "Harvest_F";
+		second = "Stripping_F";
+		mintimelag = 10;
+	}
+	precedence {
+		type = FS;
+		first = "Stripping_F";
+		second = "turning_F";
+		mintimelag = 10;
+	}
+	precedence {
+		type = FS;
+		first = "turning_F";
+		second = "pressing_F";
+		mintimelag = 10;
 	}
 
 }
